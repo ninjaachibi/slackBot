@@ -1,0 +1,36 @@
+{
+  "name": "slackbot",
+  "version": "1.0.0",
+  "description": "Backend Capstone Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "babel": "mkdir -p build && babel server.js -o build/main.bundle.js",
+    "lint": "eslint --fix *.js",
+    "start": "babel-node server/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kkpatel21/slackBot.git"
+  },
+  "author": "Krish, Conor, Robert",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kkpatel21/slackBot/issues"
+  },
+  "homepage": "https://github.com/kkpatel21/slackBot#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^5.2.0",
+    "eslint-config-google": "^0.9.1"
+  },
+  "dependencies": {
+    "@slack/client": "^4.3.1",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "googleapis": "^27.0.0",
+    "http": "0.0.0",
+    "mongoose": "^5.2.4"
+  }
+}
