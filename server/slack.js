@@ -38,10 +38,11 @@ global.reminderInfo = {}
 
 
 rtm.on('message', (message) => {
-  console.log(message)
+  // console.log(message)
   if ( (message.subtype && message.subtype === 'bot_message') ||
        (message.subtype && message.subtype === 'message_changed') ||
-       (!message.subtype && message.user === rtm.activeUserId) ) {
+       (!message.subtype && message.user === rtm.activeUserId) ||
+        (message.channel[0] !== 'D')) {
          return;
        }
   let replyChannel = message.channel
@@ -63,6 +64,12 @@ rtm.on('message', (message) => {
     if (intent === 'Reminder'){
       let date = responses[0].queryResult.parameters.fields.date.stringValue;
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+      if (!title){
+        return rtm.sendMessage("I need something to remind you about, otherwise I'm just going to be annoying you for no reason", replyChannel)
+      }
+      if (!date){
+        return rtm.sendMessage(`I need a date to create a reminder on, otherwise you're going to ${title} on the wrong day and blame me`, replyChannel)
+      }
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // Response Call
@@ -95,13 +102,22 @@ rtm.on('message', (message) => {
       })
     } else if (intent === 'Meeting') {
       let date = responses[0].queryResult.parameters.fields.date.stringValue;
+      if (!date){
+        return rtm.sendMessage('I need a date to create the meeting on, otherwise people will meet on the wrong day', replyChannel)
+      }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
-      console.log('time', responses[0].queryResult.parameters.fields);
+      // console.log('time', responses[0].queryResult.parameters.fields);
       // let time = responses[0].queryResult.parameters.fields.time.stringValue
       let time = formatTimeString(new Date(responses[0].queryResult.parameters.fields.time.stringValue))
+      if (!time){
+        return rtm.sendMessage('I need a time for the meeting, otherwise no one will know when to meet', replyChannel)
+      }
       let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
+      if (!invitees){
+        return rtm.sendMessage("I need some people for the meeting, otherwise you'll be bored all on your own", replyChannel)
+      }
       invitees = invitees.map((person)=> (person.stringValue));
       let guests = invitees[0];
       for (let i = 1; i < invitees.length - 1; i++){
@@ -138,11 +154,7 @@ rtm.on('message', (message) => {
           ]
         })
     } else {
-      // console.log(responses[0].queryResult);
-      rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
-      .then((msg) => console.log(`Message sent to channel ${replyChannel} with ts:${msg.ts}`))
-      .catch(console.error);
-      console.log(responses[0].queryResult.fullfillmentText);
+      return rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
     }
   })
 
