@@ -38,10 +38,11 @@ global.reminderInfo = {}
 
 
 rtm.on('message', (message) => {
-  console.log(message)
+  // console.log(message)
   if ( (message.subtype && message.subtype === 'bot_message') ||
        (message.subtype && message.subtype === 'message_changed') ||
-       (!message.subtype && message.user === rtm.activeUserId) ) {
+       (!message.subtype && message.user === rtm.activeUserId) ||
+        (message.channel[0] !== 'D')) {
          return;
        }
   let replyChannel = message.channel
@@ -57,12 +58,18 @@ rtm.on('message', (message) => {
   sessionClient
   .detectIntent(request)
   .then(responses => {
-    console.log("RESPONSE", responses[0].queryResult);
+    console.log("RESPONSE", responses[0].queryResult.parameters);
     let intent = responses[0].queryResult.intent.displayName;
     console.log('Intent', intent);
     if (intent === 'Reminder'){
       let date = responses[0].queryResult.parameters.fields.date.stringValue;
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+      if (!title){
+        return rtm.sendMessage("I need something to remind you about, otherwise I'm just going to be annoying you for no reason", replyChannel)
+      }
+      if (!date){
+        return rtm.sendMessage(`I need a date to create a reminder on, otherwise you're going to ${title} on the wrong day and blame me`, replyChannel)
+      }
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // Response Call
@@ -71,7 +78,7 @@ rtm.on('message', (message) => {
         channel: replyChannel,
         attachments: [
               {
-                "text": `Would you like me to remind you to ${title} on ${prettyDate}`,
+                "text": `Would you like me to remind you to ${title}on ${prettyDate}`,
                 "fallback": "You were unable to set up a reminder",
                 "callback_id": "reminder_confirm",
                 "color": "#3AA3E3",
@@ -95,18 +102,36 @@ rtm.on('message', (message) => {
       })
     } else if (intent === 'Meeting') {
       let date = responses[0].queryResult.parameters.fields.date.stringValue;
+      if (!date){
+        return rtm.sendMessage('I need a date to create the meeting on, otherwise people will meet on the wrong day', replyChannel)
+      }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
-      let time = responses[0].queryResult.parameters.fields.time.stringValue;
-      // let invitees = responses[0].queryResult.parameters.fields.Invitees.listValue.values;
-      // invitees = invitees.map((person)=> (person.stringValue))
-      let invitees = 'fred'
+      // console.log('time', responses[0].queryResult.parameters.fields);
+      // let time = responses[0].queryResult.parameters.fields.time.stringValue
+      let time = formatTimeString(new Date(responses[0].queryResult.parameters.fields.time.stringValue))
+      if (!time){
+        return rtm.sendMessage('I need a time for the meeting, otherwise no one will know when to meet', replyChannel)
+      }
+      let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
+      if (!invitees){
+        return rtm.sendMessage("I need some people for the meeting, otherwise you'll be bored all on your own", replyChannel)
+      }
+      invitees = invitees.map((person)=> (person.stringValue));
+      let guests = invitees[0];
+      for (let i = 1; i < invitees.length - 1; i++){
+        guests += ', ' + invitees[i];
+      }
+      guests += ', and ' + invitees[invitees.length - 1];
+      if (invitees.length === 1){
+        guests = invitees[0]
+      }
       web.chat.postMessage({
           channel: replyChannel,
           attachments: [
               {
-                "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
+                "text": `Would you like me to set a meeting with ${guests} at ${time} on ${prettyDate}?`,
                 "fallback": "You were unable to set up a meeting. Try again.",
                 "callback_id": "meeting-confirm",
                 "color": "#3AA3E3",
@@ -129,11 +154,7 @@ rtm.on('message', (message) => {
           ]
         })
     } else {
-      // console.log(responses[0].queryResult);
-      rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
-      .then((msg) => console.log(`Message sent to channel ${replyChannel} with ts:${msg.ts}`))
-      .catch(console.error);
-      console.log(responses[0].queryResult.fullfillmentText);
+      return rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
     }
   })
 
@@ -148,3 +169,11 @@ rtm.on('message', (message) => {
   //   .catch(console.error);
   // console.log(`(channel:${message.channel}) ${message.user} says: ${message.text}`);
 })
+
+function formatTimeString(date) {
+  function pad(s) { return ((''+s).length < 2 ? '0' : '') + s; }
+  function fixHour(h) { return (h==0?'12':(h>12?h-12:h)); }
+  let h=date.getHours(), m=date.getMinutes(), s=date.getSeconds()
+    , timeStr=[fixHour(h), pad(m)].join(':');
+  return timeStr + ' ' + (h < 12 ? 'AM' : 'PM');
+}
