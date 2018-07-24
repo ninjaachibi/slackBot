@@ -1,5 +1,16 @@
 const { RTMClient, WebClient } = require('@slack/client');
 
+const projectId = process.env.DIALOGFLOW_PROJECT_ID;
+const sessionId = 'quickstart-session-id';
+const languageCode = 'en-US';
+
+// Instantiate a DialogFlow client.
+const dialogflow = require('dialogflow');
+const sessionClient = new dialogflow.SessionsClient();
+
+// Define session path
+const sessionPath = sessionClient.sessionPath(projectId, sessionId);
+
 const token = process.env.BOT_OAUTH_TOKEN;
 
 const rtm = new RTMClient(token);
@@ -32,35 +43,51 @@ rtm.on('message', (message) => {
          return;
        }
   let replyChannel = message.channel
-
-  // Response Call
-
-  web.chat.postMessage({
-    channel: replyChannel,
-    attachments: [
-          {
-            "text": "Would you like to schedule a meeting with @(Enter Name Var) on @(Enter Date) at @(Enter Time)?",
-            "fallback": "You were unable to set up a reminder",
-            "callback_id": "reminder_confirm",
-            "color": "#3AA3E3",
-            "attachment_type": "default",
-            "actions": [
-                {
-                    "name": "response",
-                    "text": "Confirm",
-                    "type": "button",
-                    "value": "true"
-                },
-                {
-                    "name": "response",
-                    "text": "Cancel",
-                    "type": "button",
-                    "value": "false"
-                }
-            ]
-          }
-      ]
+  let request = {
+    session: sessionPath,
+    queryInput: {
+      text: {
+        text: message.text,
+        languageCode: languageCode,
+      },
+    },
+  };
+  sessionClient
+  .detectIntent(request)
+  .then(responses => {
+    let date = responses[0].queryResult.parameters.date.stringValue;
+    let title = responses[0].queryResult.parameters.Subject.stringValue;
+    // Response Call
+    web.chat.postMessage({
+      channel: replyChannel,
+      attachments: [
+            {
+              "text": `Would you like me to remind you to ${title} at ${date}`,
+              "fallback": "You were unable to set up a reminder",
+              "callback_id": "reminder_confirm",
+              "color": "#3AA3E3",
+              "attachment_type": "default",
+              "actions": [
+                  {
+                      "name": "response",
+                      "text": "Confirm",
+                      "type": "button",
+                      "value": "true"
+                  },
+                  {
+                      "name": "response",
+                      "text": "Cancel",
+                      "type": "button",
+                      "value": "false"
+                  }
+              ]
+            }
+        ]
+    })
   })
+  .catch(err => {
+    console.error('ERROR:', err);
+  });
 
   // How to send a simple message
   // rtm.sendMessage('Hey Bro', replyChannel)
