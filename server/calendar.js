@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express();
+var router = express.Router();
 
 function gCal() {
   //OAuth2
@@ -17,7 +18,7 @@ function gCal() {
 
   console.log(authUrl); //this needs to be sent to slack webhook
 
-  app.get('/google/callback' , (req,res) => {
+  router.get('/google/callback' , (req,res) => {
     console.log(req.query);
 
     oAuth2Client.getToken(req.query.code, (err, token) => {
@@ -50,6 +51,8 @@ function gCal() {
       res.send("Received code")
     })
   })
+
+  return router;
 }
 
 module.exports = {
