@@ -1,9 +1,7 @@
 const bodyParser = require('body-parser')
 const path = require('path')
 
-// const slack = require('./slack')
-//mongoose
-// const mongoose = require('mongoose');
+const slack = require('./slack')
 
 //server Set Up
 const express = require('express')
@@ -24,8 +22,13 @@ app.get('/ping', (req, res) => {
 })
 
 app.post('/createReminder', (req, res) => {
-  console.log("BODY", req.body)
-  res.send('Working')
+  const payload = JSON.parse(req.body.payload)
+
+  const userId = payload.user.id
+  const info = global.reminderInfo[userId]
+  const gCal = require('./calendar').gCal;
+  gCal(info.task, info.time)
+  res.send("Done")
 })
 
 app.post('/response', (req, res) => {

@@ -19,6 +19,7 @@ rtm.start();
 const web = new WebClient(token);
 
 
+global.reminderInfo = {}
 //Sent Message to General
 // web.channels.list()
 //   .then((res) => {
@@ -37,6 +38,7 @@ const web = new WebClient(token);
 
 
 rtm.on('message', (message) => {
+  console.log(message)
   if ( (message.subtype && message.subtype === 'bot_message') ||
        (message.subtype && message.subtype === 'message_changed') ||
        (!message.subtype && message.user === rtm.activeUserId) ) {
@@ -61,6 +63,7 @@ rtm.on('message', (message) => {
     let prettyDate = new Date(date)
     prettyDate = prettyDate.toDateString()
     // Response Call
+    global.reminderInfo[message.user] = {task: title, time: date}
     web.chat.postMessage({
       channel: replyChannel,
       attachments: [
