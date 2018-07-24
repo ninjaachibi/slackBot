@@ -8,6 +8,7 @@ function gCal(task, time) {
   // If modifying these scopes, delete credentials.json.
   const SCOPES = ['https://www.googleapis.com/auth/calendar.readon'];
   const TOKEN_PATH = 'token.json';
+  console.log("hey")
 
   // Load client secrets from a local file.
   fs.readFile(credentialsString, (err, content) => {
