@@ -19,6 +19,11 @@ const server = http.Server(handleRequest)
 app.use(express.static(path.join(__dirname, 'build')))
 app.use(bodyParser.json());
 
+
+//create calendar event
+const gCal = require('./calendar').gCal;
+gCal();
+
 //Test-Route
 app.get('/ping', (req, res) => {
   res.send('pong')
