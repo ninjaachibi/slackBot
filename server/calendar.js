@@ -4,21 +4,18 @@ const {google} = require('googleapis');
 const credentials = require('./credentials.json')
 let credentialsString = JSON.stringify(credentials);
 
-function gCal() {
+function gCal(task, time) {
   // If modifying these scopes, delete credentials.json.
-  const SCOPES = ['https://www.googleapis.com/auth/calendar'];
+  const SCOPES = ['https://www.googleapis.com/auth/calendar.readon'];
   const TOKEN_PATH = 'token.json';
 
-  let content = {
-    installed: {
-      client_secret: process.env.GCAL_CLIENT_SECRET,
-      client_id: process.env.GCAL_CLIENT_ID,
-      redirect_uris: ["urn:ietf:wg:oauth:2.0:oob","http://localhost"],
-    }
-  }
-  // Authorize a client with credentials, then call the Google Calendar API.
-  authorize(content, createEvent);
-  
+  // Load client secrets from a local file.
+  fs.readFile(credentialsString, (err, content) => {
+    if (err) return console.log('Error loading client secret file:', err);
+    // Authorize a client with credentials, then call the Google Calendar API.
+    authorize(JSON.parse(content), listEvents);
+  });
+
   /**
    * Create an OAuth2 client with the given credentials, and then execute the
    * given callback function.
@@ -83,15 +80,13 @@ function gCal() {
     // stored credentials.
 
     var event = {
-      'summary': 'Robert\'s naptime' ,
-      'location': '800 Howard St., San Francisco, CA 94103',
-      'description': 'zzzzzzZ',
+      'summary': task ,
       'start': {
-        'date': '2018-07-28',
+        'date': time,
 
       },
       'end': {
-        'date': '2018-07-29',
+        'date': time,
 
       },
     }
