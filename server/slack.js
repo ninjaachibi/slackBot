@@ -55,14 +55,17 @@ rtm.on('message', (message) => {
   sessionClient
   .detectIntent(request)
   .then(responses => {
-    let date = responses[0].queryResult.parameters.date.stringValue;
-    let title = responses[0].queryResult.parameters.Subject.stringValue;
+    console.log(responses[0].queryResult.parameters);
+    let date = responses[0].queryResult.parameters.fields.date.stringValue;
+    let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+    let prettyDate = new Date(date)
+    prettyDate = prettyDate.toDateString()
     // Response Call
     web.chat.postMessage({
       channel: replyChannel,
       attachments: [
             {
-              "text": `Would you like me to remind you to ${title} at ${date}`,
+              "text": `Would you like me to remind you to ${title} on ${prettyDate}`,
               "fallback": "You were unable to set up a reminder",
               "callback_id": "reminder_confirm",
               "color": "#3AA3E3",

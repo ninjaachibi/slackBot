@@ -1,9 +1,9 @@
 const bodyParser = require('body-parser')
 const path = require('path')
 
-const slack = require('./slack')
+// const slack = require('./slack')
 //mongoose
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
 //server Set Up
 const express = require('express')
@@ -20,11 +20,11 @@ app.use(express.static(path.join(__dirname, 'build')))
 app.use(bodyParser.json());
 
 
-//create calendar event
+// create calendar event
 const gCal = require('./calendar').gCal;
 gCal();
 
-//Test-Route
+// Test-Route
 app.get('/ping', (req, res) => {
   res.send('pong')
 })
