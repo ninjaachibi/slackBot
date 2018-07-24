@@ -7,6 +7,7 @@ const languageCode = 'en-US';
 // Instantiate a DialogFlow client.
 const dialogflow = require('dialogflow');
 const sessionClient = new dialogflow.SessionsClient();
+import mongoose from 'mongoose';
 
 // Define session path
 const sessionPath = sessionClient.sessionPath(projectId, sessionId);

@@ -3,7 +3,7 @@ const path = require('path')
 import gCal from './calendar';
 import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
-// const slack = require('./slack')
+const slack = require('./slack')
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")

@@ -19,10 +19,10 @@ let userSchema = new mongoose.Schema({
   },
   defaultMeeting: 30,
   gCalAccount: {
-    gCalAccess: {
+    gCalToken: {
       type: String,
     },
-    gCalRefresh: {
+    gCalRefreshToken: {
       type: String,
     },
     gPlusId: {
