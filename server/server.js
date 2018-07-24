@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //create calendar event
 const gCal = require('./calendar').gCal;
-gCal();
+gCal(); //need to somehow account for the route inside
 
 // Test-Route
 app.get('/ping', (req, res) => {
