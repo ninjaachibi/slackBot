@@ -6,16 +6,19 @@ let credentialsString = JSON.stringify(credentials);
 
 function gCal() {
   // If modifying these scopes, delete credentials.json.
-  const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
+  const SCOPES = ['https://www.googleapis.com/auth/calendar'];
   const TOKEN_PATH = 'token.json';
 
-  // Load client secrets from a local file.
-  fs.readFile(credentialsString, (err, content) => {
-    if (err) return console.log('Error loading client secret file:', err);
-    // Authorize a client with credentials, then call the Google Calendar API.
-    authorize(JSON.parse(content), listEvents);
-  });
-
+  let content = {
+    installed: {
+      client_secret: process.env.GCAL_CLIENT_SECRET,
+      client_id: process.env.GCAL_CLIENT_ID,
+      redirect_uris: ["urn:ietf:wg:oauth:2.0:oob","http://localhost"],
+    }
+  }
+  // Authorize a client with credentials, then call the Google Calendar API.
+  authorize(content, createEvent);
+  
   /**
    * Create an OAuth2 client with the given credentials, and then execute the
    * given callback function.
