@@ -57,40 +57,87 @@ rtm.on('message', (message) => {
   sessionClient
   .detectIntent(request)
   .then(responses => {
-    console.log(responses[0].queryResult.parameters);
-    let date = responses[0].queryResult.parameters.fields.date.stringValue;
-    let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
-    let prettyDate = new Date(date)
-    prettyDate = prettyDate.toDateString()
-    // Response Call
-    global.reminderInfo[message.user] = {task: title, time: date}
-    web.chat.postMessage({
-      channel: replyChannel,
-      attachments: [
-            {
-              "text": `Would you like me to remind you to ${title}on ${prettyDate}`,
-              "fallback": "You were unable to set up a reminder",
-              "callback_id": "reminder_confirm",
-              "color": "#3AA3E3",
-              "attachment_type": "default",
-              "actions": [
+    console.log("RESPONSE", responses[0].queryResult);
+    let intent = responses[0].queryResult.intent.displayName;
+    console.log('Intent', intent);
+    if (intent === 'Reminder'){
+      let date = responses[0].queryResult.parameters.fields.date.stringValue;
+      let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+      let prettyDate = new Date(date)
+      prettyDate = prettyDate.toDateString();
+      // Response Call
+      global.reminderInfo[message.user] = {task: title, time: date}
+      web.chat.postMessage({
+        channel: replyChannel,
+        attachments: [
+              {
+                "text": `Would you like me to remind you to ${title} on ${prettyDate}`,
+                "fallback": "You were unable to set up a reminder",
+                "callback_id": "reminder_confirm",
+                "color": "#3AA3E3",
+                "attachment_type": "default",
+                "actions": [
+                    {
+                        "name": "response",
+                        "text": "Confirm",
+                        "type": "button",
+                        "value": "true"
+                    },
+                    {
+                        "name": "response",
+                        "text": "Cancel",
+                        "type": "button",
+                        "value": "false"
+                    }
+                ]
+              }
+          ]
+      })
+    } else if (intent === 'Meeting') {
+      let date = responses[0].queryResult.parameters.fields.date.stringValue;
+      let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+      let prettyDate = new Date(date)
+      prettyDate = prettyDate.toDateString();
+      let time = responses[0].queryResult.parameters.fields.time.stringValue;
+      // let invitees = responses[0].queryResult.parameters.fields.Invitees.listValue.values;
+      // invitees = invitees.map((person)=> (person.stringValue))
+      let invitees = 'fred'
+      web.chat.postMessage({
+          channel: replyChannel,
+          attachments: [
+              {
+                "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
+                "fallback": "You were unable to set up a meeting. Try again.",
+                "callback_id": "meeting-confirm",
+                "color": "#3AA3E3",
+                "attachment_type": "default",
+                "actions": [
                   {
-                      "name": "response",
-                      "text": "Confirm",
-                      "type": "button",
-                      "value": "true"
+                    "name": "response",
+                    "text": "Confirm",
+                    "type": "button",
+                    "value": "true"
                   },
                   {
-                      "name": "response",
-                      "text": "Cancel",
-                      "type": "button",
-                      "value": "false"
+                    "name": "response",
+                    "text": "Cancel",
+                    "type": "button",
+                    "value": "false"
                   }
-              ]
-            }
-        ]
-    })
+                ]
+              }
+          ]
+        })
+    } else {
+      // console.log(responses[0].queryResult);
+      rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
+      .then((msg) => console.log(`Message sent to channel ${replyChannel} with ts:${msg.ts}`))
+      .catch(console.error);
+      console.log(responses[0].queryResult.fullfillmentText);
+    }
   })
+
+
   .catch(err => {
     console.error('ERROR:', err);
   });
