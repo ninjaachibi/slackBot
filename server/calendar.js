@@ -107,6 +107,8 @@ function gCal() {
 
   }
 
+}
+
 module.exports = {
   gCal
 }
