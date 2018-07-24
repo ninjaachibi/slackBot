@@ -24,6 +24,11 @@ app.get('/ping', (req, res) => {
   res.send('pong')
 })
 
+app.post('/response', (req, res) => {
+  console.log('---------------TEST------------');
+  res.json(req)
+})
+
 
 //Do Not Touch This Bottom Part
 server.listen(process.env.port || 3000, () => {console.log('listening on port 3000') });

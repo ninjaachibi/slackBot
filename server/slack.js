@@ -7,20 +7,23 @@ rtm.start();
 
 const web = new WebClient(token);
 
-web.channels.list()
-  .then((res) => {
-    // Take any channel for which the bot is a member
-    console.log(res)
-    const channel = res.channels.find(c => c.is_member);
 
-    if (channel) {
-      rtm.sendMessage('Hello World!', channel.id)
-        .then((msg) => console.log(`Message sent to channel ${channel.name} with ts:${msg.ts}`))
-        .catch(console.error);
-    } else {
-      console.log('This bot does not belong to any channel, invite it')
-    }
-  });
+//Sent Message to General
+// web.channels.list()
+//   .then((res) => {
+//     // Take any channel for which the bot is a member
+//     console.log(res)
+//     const channel = res.channels.find(c => c.is_member);
+//
+//     if (channel) {
+//       rtm.sendMessage('Hello World!', channel.id)
+//         .then((msg) => console.log(`Message sent to channel ${channel.name} with ts:${msg.ts}`))
+//         .catch(console.error);
+//     } else {
+//       console.log('This bot does not belong to any channel, invite it')
+//     }
+//   });
+
 
 rtm.on('message', (message) => {
   console.log(message)
@@ -29,8 +32,39 @@ rtm.on('message', (message) => {
          return;
        }
   let replyChannel = message.channel
-  rtm.sendMessage('Hey Bro', replyChannel)
-    .then((msg) => console.log(`Message sent to channel ${replyChannel} with ts:${msg.ts}`))
-    .catch(console.error);
-  console.log(`(channel:${message.channel}) ${message.user} says: ${message.text}`);
+
+  // Response Call
+
+  web.chat.postMessage({
+    channel: replyChannel,
+    attachments: [
+          {
+            "text": "Would you like to schedule a meeting with @(Enter Name Var) on @(Enter Date) at @(Enter Time)?",
+            "fallback": "You were unable to set up a reminder",
+            "callback_id": "reminder_confirm",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "actions": [
+                {
+                    "name": "response",
+                    "text": "Confirm",
+                    "type": "button",
+                    "value": "true"
+                },
+                {
+                    "name": "response",
+                    "text": "Cancel",
+                    "type": "button",
+                    "value": "false"
+                }
+            ]
+          }
+      ]
+  })
+
+  // How to send a simple message
+  // rtm.sendMessage('Hey Bro', replyChannel)
+  //   .then((msg) => console.log(`Message sent to channel ${replyChannel} with ts:${msg.ts}`))
+  //   .catch(console.error);
+  // console.log(`(channel:${message.channel}) ${message.user} says: ${message.text}`);
 })
