@@ -1,5 +1,9 @@
 env.sh
 gcal-demo
+cloudkey1.json
+token.json
 
 # dependencies
 node_modules
+
+cloudKey1.json

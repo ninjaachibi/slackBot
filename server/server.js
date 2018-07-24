@@ -1,32 +1,31 @@
 const bodyParser = require('body-parser')
 const path = require('path')
 
-const slack = require('./slack')
+// const slack = require('./slack')
 //mongoose
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
 //server Set Up
 const express = require('express')
 const app = express();
-const http = require('http')
-
-function handleRequest(request, response) {
-  response.end('Ngrok is working! - Path Hit: ' + request.url);
-}
-
-const server = http.Server(handleRequest)
 
 app.use(express.static(path.join(__dirname, 'build')))
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 
 //create calendar event
-const gCal = require('./calendar').gCal;
-gCal();
+// const gCal = require('./calendar').gCal;
+// gCal();
 
-//Test-Route
+// Test-Route
 app.get('/ping', (req, res) => {
   res.send('pong')
+})
+
+app.post('/createReminder', (req, res) => {
+  console.log("BODY", req.body)
+  res.send('Working')
 })
 
 app.post('/response', (req, res) => {
@@ -35,7 +34,9 @@ app.post('/response', (req, res) => {
 })
 
 
+
+
 //Do Not Touch This Bottom Part
-server.listen(process.env.port || 3000, () => {console.log('listening on port 3000') });
+app.listen(process.env.port || 3000, () => {console.log('listening on port 3000') });
 
 console.log('Server running at http://127.0.0.1:3000/')
