@@ -1,7 +1,7 @@
 const bodyParser = require('body-parser')
 const path = require('path')
 
-const slack = require('./slack')
+// const slack = require('./slack')
 
 //server Set Up
 const express = require('express')
@@ -13,8 +13,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 //create calendar event
-// const gCal = require('./calendar').gCal;
-// gCal();
+const gCal = require('./calendar').gCal;
+gCal();
 
 // Test-Route
 app.get('/ping', (req, res) => {
@@ -35,8 +35,6 @@ app.post('/response', (req, res) => {
   console.log('---------------TEST------------');
   res.json(req)
 })
-
-
 
 
 //Do Not Touch This Bottom Part
