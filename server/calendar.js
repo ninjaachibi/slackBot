@@ -1,7 +1,7 @@
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
-const credentials = require('./credentials.json')
+const credentials = require('../credentials.json')
 let credentialsString = JSON.stringify(credentials);
 
 function gCal(task, time) {
