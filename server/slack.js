@@ -69,7 +69,7 @@ rtm.on('message', (message) => {
       attachments: [
             {
               "text": `Would you like me to remind you to ${title}on ${prettyDate}`,
-              "fallback": "You were unable to set up a reminder",
+              "fallback": "You were unable to set up a reminder. Try again.",
               "callback_id": "reminder_confirm",
               "color": "#3AA3E3",
               "attachment_type": "default",
@@ -90,6 +90,33 @@ rtm.on('message', (message) => {
             }
         ]
     })
+
+    // web.chat.postMessage({
+    //   channel: replyChannel,
+    //   attachments: [
+    //       {
+    //         "text": `Would you like me to set a meeting with {Enter Invitees} at {Time} on {Day}?`,
+    //         "fallback": "You were unable to set up a meeting. Try again.",
+    //         "callback_id": "meeting-confirm",
+    //         "color": "#3AA3E3",
+    //         "attachment_type": "default",
+    //         "actions": [
+    //           {
+    //             "name": "response",
+    //             "text": "Confirm",
+    //             "type": "button",
+    //             "value": "true"
+    //           },
+    //           {
+    //             "name": "response",
+    //             "text": "Cancel",
+    //             "type": "button",
+    //             "value": "false"
+    //           }
+    //         ]
+    //       }
+    //   ]
+    // })
   })
   .catch(err => {
     console.error('ERROR:', err);

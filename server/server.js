@@ -11,24 +11,37 @@ app.use(express.static(path.join(__dirname, 'build')))
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
-//create calendar event
-// const gCal = require('./calendar').gCal;
-// gCal();
-
 // Test-Route
 app.get('/ping', (req, res) => {
   res.send('pong')
 })
 
-app.post('/createReminder', (req, res) => {
-  const payload = JSON.parse(req.body.payload)
+let payload = ""
+app.post('/slack', (req, res) => {
+  payload = JSON.parse(req.body.payload)
+  if (payload.callback_id === "reminder_confirm") {
+    res.redirect('/createReminder')
+  } else if (payload.callback_id === "meeting_confirm") {
+    res.redirect('/createMeeting')
+  } else {
+    res.redirect('/ping')
+  }
+})
 
+app.get('/createReminder', (req, res) => {
   const userId = payload.user.id
   const info = global.reminderInfo[userId]
   const gCal = require('./calendar').gCal;
   gCal(info.task, info.time)
   res.send("Done")
+})
+
+app.get('/createMeeting', (req, res) => {
+  const userId = payload.user.id
+  const info = global.reminderInfo[userId]
+  const gCal = require('./calendar').gCal;
+  gCal(info.task, info.time)
+  res.send("DoneIt")
 })
 
 app.post('/response', (req, res) => {
