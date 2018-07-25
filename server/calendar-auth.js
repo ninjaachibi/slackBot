@@ -36,7 +36,7 @@ router.get('/google/callback' , (req,res) => {
         .then(() => {
           if (payloadHolder.callback_id === 'reminder_confirm'){
             res.send(`I've set a reminder but you should really remember things on your own`)
-          } else if(payloadHolder.callback_id === 'meeting-confirm'){
+          } else if(payloadHolder.callback_id === 'meeting_confirm'){
             res.send(`The meeting is set, but it seems kinda pointless`)
           }
         })
