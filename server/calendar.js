@@ -10,6 +10,7 @@ export default function gCal(token, task, time, cb) {
     oAuth2Client.setCredentials(token);
     console.log('in calendar: token is ', token);
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
+
     let endTime = new Date(time)
     endTime.setDate(time.getDate()+1)
     endTime = endTime.toISOString().substring(0, 10)
