@@ -86,7 +86,7 @@ export default function slackFinish(payload) {
       if (payload.callback_id === "reminder_confirm") {
         console.log('token is ', token);
         return new Promise ((resolve, reject) => {
-          gCal(token, info.task, info.time, (err, succ) => {
+          gCal(token, info, payload.callback_id, (err, succ) => {
             if (err) {
               console.log('ERROR', err);
             } else {
@@ -95,28 +95,10 @@ export default function slackFinish(payload) {
             resolve(true)
           })
         })
-      }
     })
 }
 
 
-app.get('/createReminder', (req, res) => {
-
-  // User.findOne({slackid: userId})
-  //.then( //check to see if there's an auth token)
-  //if not slack asks the user to click the link
-  gCal(token, info.task, info.time, (err, event) => {
-
-  })
-  res.send("Done")
-})
-
-app.get('/createMeeting', (req, res) => {
-  const userId = payload.user.id
-  const info = global.reminderInfo[userId]
-  gCal(info.task, info.time)
-  res.send("DoneIt")
-})
 
 
 
