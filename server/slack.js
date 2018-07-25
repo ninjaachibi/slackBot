@@ -104,6 +104,8 @@ rtm.on('message', (message) => {
         return rtm.sendMessage('I need a date to create the meeting on, otherwise people will meet on the wrong day', replyChannel)
       }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+      // let location = responses[0].queryResult.parameters.fields.location.stringValue;
+      let duration = responses[0].queryResult.parameters.fields.duration;
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // console.log('time', responses[0].queryResult.parameters.fields);
@@ -129,13 +131,21 @@ rtm.on('message', (message) => {
       if (title){
         global.meetingInfo[message.user] = {title: title}
       }
+      // if (location) {
+      //   global.meetingInfo[message.user] = {location: location}
+      // }
+      if (duration){
+	      global.meetingInfo[message.user] = {duration: duration}
+      } else {
+        global.meetingInfo[message.user] = {duration: {amount: 30, unit: 'min'}}
+      }
       web.chat.postMessage({
           channel: replyChannel,
           attachments: [
               {
                 "text": `Would you like me to set a meeting with ${guests} at ${time} on ${prettyDate}?`,
                 "fallback": "You were unable to set up a meeting. Try again.",
-                "callback_id": "meeting-confirm",
+                "callback_id": "meeting_confirm",
                 "color": "#3AA3E3",
                 "attachment_type": "default",
                 "actions": [

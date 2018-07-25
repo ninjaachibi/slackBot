@@ -43,7 +43,7 @@ app.post('/slack', (req, res) => {
   console.log("PAYLOAD", payload)
   if (payload.actions[0].value === 'cancel' && payload.callback_id === 'reminder_confirm'){
     res.send(`I've cancelled your request, but if we're being honest, without that reminder, you're going to forget`)
-  } else if (payload.actions[0].value === 'cancel' && payload.callback_id === 'meeting-confirm') {
+  } else if (payload.actions[0].value === 'cancel' && payload.callback_id === 'meeting_confirm') {
     res.send(`I've cancelled the meeting but it could have been really important`)
   }else {
     const userId = payload.user.id
@@ -61,7 +61,7 @@ app.post('/slack', (req, res) => {
           .then(() => {
             if (payload.callback_id === 'reminder_confirm'){
               res.send(`I've set a reminder but you should really remember things on your own`)
-            } else if(payload.callback_id === 'meeting-confirm'){
+            } else if(payload.callback_id === 'meeting_confirm'){
               res.send(`The meeting is set, but it seems kinda pointless`)
             }
           })
@@ -77,7 +77,7 @@ export default function slackFinish(payload) {
       let info
       if (payload.callback_id === 'reminder_confirm') {
         info = global.reminderInfo[payload.user.id]
-      } else if (payload.callback_id === 'meeting-confirm') {
+      } else if (payload.callback_id === 'meeting_confirm') {
         info = global.meetingInfo[payload.user.id]
       }
         return new Promise ((resolve, reject) => {
