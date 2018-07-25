@@ -74,11 +74,14 @@ export default function slackFinish(payload) {
   return User.findOne({slackId: payload.user.id})
     .then((user) => {
       let token = user.gCalToken
-      const info = global.reminderInfo[payload.user.id]
-      let intent = payload.callback_id
-        console.log('token is ',token);
+      let info
+      if (payload.callback_id === 'reminder_confirm') {
+        info = global.reminderInfo[payload.user.id]
+      } else if (payload.callback_id === 'meeting-confirm') {
+        info = global.meetingInfo[payload.user.id]
+      }
         return new Promise ((resolve, reject) => {
-          gCal(token, info, intent, (err, succ) => {
+          gCal(token, info, payload.callback_id, (err, succ) => {
             if (err) {
               console.log('ERROR', err);
             } else {
@@ -91,13 +94,6 @@ export default function slackFinish(payload) {
 }
 
 
-
-app.get('/createMeeting', (req, res) => {
-  const userId = payload.user.id
-  const info = global.reminderInfo[userId]
-  gCal(info.task, info.time)
-  res.send("DoneIt")
-})
 
 
 
