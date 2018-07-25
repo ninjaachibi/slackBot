@@ -105,7 +105,7 @@ rtm.on('message', (message) => {
       }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
       // let location = responses[0].queryResult.parameters.fields.location.stringValue;
-      let duration = responses[0].queryResult.parameters.fields.duration;
+      let duration = responses[0].queryResult.parameters.fields.duration.listValue.values[0].structValue.fields;
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // console.log('time', responses[0].queryResult.parameters.fields);
