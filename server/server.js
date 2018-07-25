@@ -7,6 +7,10 @@ const slack = require('./slack')
 import models from './models/models.js'
 const {User, Task} = models
 
+//For revoking refresh tokens
+// import axios from 'axios';
+// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlsDBoy9RsVI0jAhAQtxcux1_zrCZ1r4v3utns0R2YwlUOkdhOZpmtIUb7kxq3BNzHZZxi4QB00nUuy-1R8tKw4S3-dCipI4mJde1nnsSSTBatsgotzLQD_7o6DG`)
+
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
 }
@@ -57,11 +61,12 @@ app.post('/slack', (req, res) => {
           //send to slack
           res.send(`Might want authorize Slack to access google calendars \n ${url}`)
         }
-        else if (user.gCalToken.expiry_date < Date.now() + 60000) {
+        else if(user.gCalToken.expiry_date < Date.now() + 60000) {
           console.log('**************************refreshing token***********************');
           //refresh token
-          let token = refreshToken(user.gCalToken);
-          console.log(token);
+          console.log('token is',user.gCalToken);
+          let token = await refreshToken(user.gCalToken);
+          console.log('new token is ',token);
           user.gCalToken = token;
           await user.save();
         }
@@ -81,30 +86,26 @@ app.post('/slack', (req, res) => {
 
 export default function slackFinish(payload) {
   return User.findOne({slackId: payload.user.id})
-    .then((user) => {
-      let token = user.gCalToken
-      let info
-      if (payload.callback_id === 'reminder_confirm') {
-        info = global.reminderInfo[payload.user.id]
-      } else if (payload.callback_id === 'meeting_confirm') {
-        info = global.meetingInfo[payload.user.id]
-      }
-        return new Promise ((resolve, reject) => {
-          gCal(token, info, payload.callback_id, (err, succ) => {
-            if (err) {
-              console.log('ERROR', err);
-            } else {
-              console.log('SUCCESS', succ.data.htmlLink)
-            }
-            resolve(true)
-          })
-        })
+  .then((user) => {
+    let token = user.gCalToken
+    let info
+    if (payload.callback_id === 'reminder_confirm') {
+      info = global.reminderInfo[payload.user.id]
+    } else if (payload.callback_id === 'meeting_confirm') {
+      info = global.meetingInfo[payload.user.id]
     }
+    return new Promise ((resolve, reject) => {
+      gCal(token, info, payload.callback_id, (err, succ) => {
+        if (err) {
+          console.log('ERROR', err);
+        } else {
+          console.log('SUCCESS', succ.data.htmlLink)
+        }
+        resolve(true)
+      })
+    })
   })
 }
-
-
-
 
 
 //Do Not Touch This Bottom Part

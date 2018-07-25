@@ -44,12 +44,16 @@ export default function gCal(token, info, intent, cb) {
 
   }
 
-  export function refreshToken () {
+  export function refreshToken (token) {
     let client = new google.auth.OAuth2(
       process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
     client.setCredentials(token);
-    return client.refreshAccessToken((err,token) => {
-      return token;
+    return new Promise((resolve, reject) => {
+      client.refreshAccessToken((err,token) => {
+        if(err) reject(err)
+        console.log('refreshed token');
+        resolve(token);
+      })
     })
   }
 
