@@ -8,21 +8,24 @@ export default function gCal(token, task, time, cb) {
     process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
 
     oAuth2Client.setCredentials(token);
+    console.log('in calendar: token is ', token);
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
+    let endTime = new Date(time)
+    endTime.setDate(time.getDate()+1)
+    endTime = endTime.toISOString().substring(0, 10)
+    time = time.toISOString().substring(0, 10)
+
     var event = {
-      'summary': 'Robert\'s naptime' ,
-      'location': '800 Howard St., San Francisco, CA 94103',
-      'description': 'zzzzzzZ',
+      'summary': task ,
       'start': {
-        'date': '2018-07-29',
+        'date': time,
       },
       'end': {
-        'date': '2018-07-30',
+        'date': endTime,
       },
     }
 
     calendar.events.insert({
-      auth: oAuth2Client,
       calendarId: 'primary',
       resource: event,
     }, function(err, event) {

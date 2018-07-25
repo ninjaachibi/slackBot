@@ -17,18 +17,10 @@ let userSchema = new mongoose.Schema({
   slackDMIds: {
     type: String,
   },
-  defaultMeeting: 30,
-  gCalAccount: {
-    gCalToken: {
-      type: String,
-    },
-    gCalRefreshToken: {
-      type: String,
-    },
-    gPlusId: {
-      type: String,
-    }
-  }
+  gCalToken: {
+    type: Object,
+    default: ""
+  },
 })
 
 let taskSchema = new mongoose.Schema({
@@ -70,7 +62,8 @@ let meetingSchema = new mongoose.Schema({
   },
   //This can be the default based on the user requesting, or if specified make it the specified time.
   meetingLength: {
-    type: String,
+    type: Number,
+    default: 30
   },
   gCalFields: {
     type: String,
@@ -78,7 +71,10 @@ let meetingSchema = new mongoose.Schema({
   status: {
     type: String,
   },
-  createdAt: new Date(),
+  createdAt: {
+    type: Date,
+    default: new Date(),
+  },
   requesterId: {
     type: String,
     required: true
