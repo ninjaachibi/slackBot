@@ -1,6 +1,6 @@
 const bodyParser = require('body-parser')
 const path = require('path')
-import gCal from './calendar';
+import gCal, {refreshToken} from './calendar';
 import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
 const slack = require('./slack')
@@ -49,14 +49,23 @@ app.post('/slack', (req, res) => {
     const userId = payload.user.id
     const info = global.reminderInfo[userId]
     User.findOne({slackId: userId})
-      .then((user) => {
+      .then(async (user) => {
         console.log('User is', user)
         console.log('Token is', !!user.gCalToken)
         if (!user.gCalToken) {
-          let url = generateAuthUrl(payload);
+          let url = generateAuthUrl(payload); //argument is slackId
           //send to slack
-          res.send(`Might want to authorize Slack to access google calendars \n ${url}`)
-        } else {
+          res.send(`Might want authorize Slack to access google calendars \n ${url}`)
+        }
+        else if (user.gCalToken.expiry_date < Date.now() + 60000) {
+          console.log('**************************refreshing token***********************');
+          //refresh token
+          let token = refreshToken(user.gCalToken);
+          console.log(token);
+          user.gCalToken = token;
+          await user.save();
+        }
+        else {
           slackFinish(payload)
           .then(() => {
             if (payload.callback_id === 'reminder_confirm'){
@@ -85,12 +94,13 @@ export default function slackFinish(payload) {
             if (err) {
               console.log('ERROR', err);
             } else {
-              console.log(succ)
+              console.log('SUCCESS', succ.data.htmlLink)
             }
             resolve(true)
           })
         })
-    })
+    }
+  })
 }
 
 
