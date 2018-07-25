@@ -76,7 +76,7 @@ rtm.on('message', (message) => {
         channel: replyChannel,
         attachments: [
               {
-                "text": `Would you like me to remind you to ${title}on ${prettyDate}`,
+                "text": `Would you like me to remind you to ${title} on ${prettyDate}`,
                 "fallback": "You were unable to set up a reminder",
                 "callback_id": "reminder_confirm",
                 "color": "#3AA3E3",
