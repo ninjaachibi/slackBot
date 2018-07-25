@@ -98,10 +98,11 @@ export default function slackFinish(payload) {
       gCal(token, info, payload.callback_id, (err, succ) => {
         if (err) {
           console.log('ERROR', err);
+          resolve(true)
         } else {
           console.log('SUCCESS', succ.data.htmlLink)
+          reject(err);
         }
-        resolve(true)
       })
     })
   })
