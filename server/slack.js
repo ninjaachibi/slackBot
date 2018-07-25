@@ -113,6 +113,12 @@ rtm.on('message', (message) => {
       if (!time){
         return rtm.sendMessage('I need a time for the meeting, otherwise no one will know when to meet', replyChannel)
       }
+      let day = date.split('T')[0];
+      let hour = time.split('T')[1];
+      let actualDate = []
+      actualDate.push(day)
+      actualDate.push(hour)
+      actualDate = actualDate.join('T');
       time = formatTimeString(new Date(time))
       let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
       if (invitees.length === 0){
@@ -129,7 +135,7 @@ rtm.on('message', (message) => {
         }
         invitees = guests;
       }
-      global.meetingInfo[message.user] = {day: date, time: time, invitees: invitees}
+      global.meetingInfo[message.user] = {date: actualDate, invitees: invitees}
       if (title){
         global.meetingInfo[message.user] = {title: title}
       }
