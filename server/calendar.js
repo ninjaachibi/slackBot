@@ -1,3 +1,4 @@
+import axios from 'axios';
 const express = require('express')
 const app = express();
 var router = express.Router();
@@ -29,9 +30,27 @@ export default function gCal(token, info, intent, cb) {
       }
     } else if (intent === "meeting_confirm") {
       let start = info.date;
-
       let end = addDuration(new Date(start), info.duration)
 
+      axios.get('https://slack.com/api/users.list', {
+        'headers': {
+          'Authorization': 'Bearer' + process.env.BOT_OAUTH_TOKEN
+        }
+      })
+        .then((userList) => {
+          userList = JSON.parse(userList)
+          console.log('Inve', info.invitees);
+          let emailList = info.invitees.map((invite) => {
+            let email;console.log('USERAS', userList);
+            userList.members.forEach((user) => {
+              if (user.display_name === invite) {
+                email = {'email': user.email };
+              }
+            })
+            return email
+          })
+
+          console.log('EMAILs', emailList);
       event = {
         'summary': info.title,
         'start': {
@@ -41,10 +60,9 @@ export default function gCal(token, info, intent, cb) {
           'dateTime': end
         },
         'location': info.location,
-        'attendees': [
-          
-        ]
+        'attendees': emailList
       }
+    })
     }
 
     calendar.events.insert({
