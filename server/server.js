@@ -70,7 +70,7 @@ app.post('/slack', (req, res) => {
   }
 })
 
-function slackFinish(payload) {
+export default function slackFinish(payload) {
   return User.findOne({slackId: payload.user.id})
     .then((user) => {
       let token = user.gCalToken
