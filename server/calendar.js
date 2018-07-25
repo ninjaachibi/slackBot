@@ -10,13 +10,14 @@ export default function gCal(token, task, time, cb) {
     oAuth2Client.setCredentials(token);
     console.log('in calendar: token is ', token);
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
+
     let endTime = new Date(time)
     endTime.setDate(time.getDate()+1)
     endTime = endTime.toISOString().substring(0, 10)
     time = time.toISOString().substring(0, 10)
 
     var event = {
-      'summary': task ,
+      'summary': upper(task) ,
       'start': {
         'date': time,
       },
@@ -38,4 +39,8 @@ export default function gCal(token, task, time, cb) {
     });
 
 
+  }
+
+  function upper(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
   }
