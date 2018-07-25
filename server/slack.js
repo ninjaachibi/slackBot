@@ -85,13 +85,13 @@ rtm.on('message', (message) => {
                         "name": "response",
                         "text": "Confirm",
                         "type": "button",
-                        "value": "true"
+                        "value": "confirm"
                     },
                     {
                         "name": "response",
                         "text": "Cancel",
                         "type": "button",
-                        "value": "false"
+                        "value": "cancel"
                     }
                 ]
               }

@@ -40,24 +40,28 @@ app.get('/ping', (req, res) => {
 let payload = ""
 app.post('/slack', (req, res) => {
   payload = JSON.parse(req.body.payload)
-  console.log(payload)
-  const userId = payload.user.id
-  const info = global.reminderInfo[userId]
-  User.findOne({slackId: userId})
-    .then((user) => {
-      console.log('User is', user)
-      console.log('Token is', !!user.gCalToken)
-      if (!user.gCalToken) {
-        let url = generateAuthUrl(payload);
-        //send to slack
-        res.send(`You forgot to authorize your google account ${url}`)
-      } else {
-        slackFinish(payload)
-        .then(() => {
-          res.send(`Your reminder is set to go!`)
-        })
-      }
-    })
+  console.log("PAYLOAD", payload)
+  if (payload.actions[0].value === 'cancel'){
+    res.send(`I've cancelled your request, but if we're being honest, without that reminder, you're going to forget`)
+  } else {
+    const userId = payload.user.id
+    const info = global.reminderInfo[userId]
+    User.findOne({slackId: userId})
+      .then((user) => {
+        console.log('User is', user)
+        console.log('Token is', !!user.gCalToken)
+        if (!user.gCalToken) {
+          let url = generateAuthUrl(payload);
+          //send to slack
+          res.send(`Might want authorize Slack to access google calendars \n ${url}`)
+        } else {
+          slackFinish(payload)
+          .then(() => {
+            res.send(`I've set a reminder but you should really remember things on your own`)
+          })
+        }
+      })
+  }
 })
 
 function slackFinish(payload) {
