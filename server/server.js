@@ -70,13 +70,13 @@ function slackFinish(payload) {
       let token = user.gCalToken
       const info = global.reminderInfo[payload.user.id]
       if (payload.callback_id === "reminder_confirm") {
-        console.log('token is ',token);
+        console.log('token is ', token);
         return new Promise ((resolve, reject) => {
           gCal(token, info.task, info.time, (err, succ) => {
             if (err) {
-              console.log(err)
+              console.log('ERROR', err)
             } else {
-              console.log(succ)
+              console.log('SUCCESS', succ)
             }
             resolve(true)
           })
