@@ -26,6 +26,8 @@ export default function gCal(token, info, intent, cb) {
           'date': endTime,
         },
       }
+    } else if (intent === "meeting_confirm") {
+      
     }
 
     calendar.events.insert({
