@@ -1,6 +1,6 @@
 const bodyParser = require('body-parser')
 const path = require('path')
-import gCal from './calendar';
+import gCal, {refreshToken} from './calendar';
 import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
 const slack = require('./slack')
@@ -53,10 +53,18 @@ app.post('/slack', (req, res) => {
         console.log('User is', user)
         console.log('Token is', !!user.gCalToken)
         if (!user.gCalToken) {
-          let url = generateAuthUrl(payload);
+          let url = generateAuthUrl(payload); //argument is slackId
           //send to slack
           res.send(`Might want authorize Slack to access google calendars \n ${url}`)
-        } else {
+        }
+        else if (user.gCalToken.expiry_date < Date.now() + 60000) {
+          console.log('**************************refreshing token***********************');
+          //refresh token
+          let token = refreshToken(user.gCalToken);
+          user.gCalToken = token;
+          user.save();
+        }
+        else {
           slackFinish(payload)
           .then(() => {
             if (payload.callback_id === 'reminder_confirm'){

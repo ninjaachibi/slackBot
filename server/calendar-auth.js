@@ -42,9 +42,6 @@ router.get('/google/callback' , (req,res) => {
         })
       }
     )
-    // .then((user) => {
-    //   console.log(user)
-    // })
     console.log('Token IS', token)
     if(err) console.log('bad code');
 

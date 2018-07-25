@@ -38,9 +38,17 @@ export default function gCal(token, task, time, cb) {
       cb(null, event)
     });
 
+  }
 
+  export function refreshToken () {
+    let client = new google.auth.OAuth2(
+      process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
+    client.setCredentials(token);
+    return client.refreshAccessToken((err,token) => {
+      return token;
+    })
   }
 
   function upper(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
