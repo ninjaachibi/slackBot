@@ -16,7 +16,7 @@ export default function gCal(token, task, time, cb) {
     time = time.toISOString().substring(0, 10)
 
     var event = {
-      'summary': task ,
+      'summary': upper(task) ,
       'start': {
         'date': time,
       },
@@ -38,4 +38,8 @@ export default function gCal(token, task, time, cb) {
     });
 
 
+  }
+
+  function upper(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
   }
