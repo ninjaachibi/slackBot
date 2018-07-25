@@ -41,9 +41,11 @@ let payload = ""
 app.post('/slack', (req, res) => {
   payload = JSON.parse(req.body.payload)
   console.log("PAYLOAD", payload)
-  if (payload.actions[0].value === 'cancel'){
+  if (payload.actions[0].value === 'cancel' && payload.callback_id === 'reminder_confirm'){
     res.send(`I've cancelled your request, but if we're being honest, without that reminder, you're going to forget`)
-  } else {
+  } else if (payload.actions[0].value === 'cancel' && payload.callback_id === 'meeting-confirm') {
+    res.send(`I've cancelled the meeting but it could have been really important`)
+  }else {
     const userId = payload.user.id
     const info = global.reminderInfo[userId]
     User.findOne({slackId: userId})
@@ -57,14 +59,18 @@ app.post('/slack', (req, res) => {
         } else {
           slackFinish(payload)
           .then(() => {
-            res.send(`I've set a reminder but you should really remember things on your own`)
+            if (payload.callback_id === 'reminder_confirm'){
+              res.send(`I've set a reminder but you should really remember things on your own`)
+            } else if(payload.callback_id === 'meeting-confirm'){
+              res.send(`The meeting is set, but it seems kinda pointless`)
+            }
           })
         }
       })
   }
 })
 
-function slackFinish(payload) {
+export default function slackFinish(payload) {
   return User.findOne({slackId: payload.user.id})
     .then((user) => {
       let token = user.gCalToken
@@ -74,7 +80,7 @@ function slackFinish(payload) {
         return new Promise ((resolve, reject) => {
           gCal(token, info.task, info.time, (err, succ) => {
             if (err) {
-              console.log('ERROR', err)
+              console.log('ERROR', err);
             } else {
               console.log('SUCCESS', succ)
             }

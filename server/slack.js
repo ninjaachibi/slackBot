@@ -21,7 +21,8 @@ rtm.start();
 
 const web = new WebClient(token);
 
-global.reminderInfo = {}
+global.reminderInfo = {};
+global.meetingInfo = {};
 
 rtm.on('message', (message) => {
   // console.log(message)
@@ -106,11 +107,11 @@ rtm.on('message', (message) => {
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // console.log('time', responses[0].queryResult.parameters.fields);
-      // let time = responses[0].queryResult.parameters.fields.time.stringValue
-      let time = formatTimeString(new Date(responses[0].queryResult.parameters.fields.time.stringValue))
+      let time = responses[0].queryResult.parameters.fields.time.stringValue
       if (!time){
         return rtm.sendMessage('I need a time for the meeting, otherwise no one will know when to meet', replyChannel)
       }
+      time = formatTimeString(new Date(time))
       let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
       if (!invitees){
         return rtm.sendMessage("I need some people for the meeting, otherwise you'll be bored all on your own", replyChannel)
@@ -123,6 +124,10 @@ rtm.on('message', (message) => {
       guests += ', and ' + invitees[invitees.length - 1];
       if (invitees.length === 1){
         guests = invitees[0]
+      }
+      global.meetingInfo[message.user] = {day: date, time: time, invitees: invitees}
+      if (title){
+        global.meetingInfo[message.user] = {title: title}
       }
       web.chat.postMessage({
           channel: replyChannel,
@@ -138,13 +143,13 @@ rtm.on('message', (message) => {
                     "name": "response",
                     "text": "Confirm",
                     "type": "button",
-                    "value": "true"
+                    "value": "confirm"
                   },
                   {
                     "name": "response",
                     "text": "Cancel",
                     "type": "button",
-                    "value": "false"
+                    "value": "cancel"
                   }
                 ]
               }
