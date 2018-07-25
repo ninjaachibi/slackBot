@@ -114,17 +114,19 @@ rtm.on('message', (message) => {
       }
       time = formatTimeString(new Date(time))
       let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
-      if (!invitees){
+      if (invitees.length === 0){
         return rtm.sendMessage("I need some people for the meeting, otherwise you'll be bored all on your own", replyChannel)
-      }
-      invitees = invitees.map((person)=> (person.stringValue));
-      let guests = invitees[0];
-      for (let i = 1; i < invitees.length - 1; i++){
-        guests += ', ' + invitees[i];
-      }
-      guests += ', and ' + invitees[invitees.length - 1];
-      if (invitees.length === 1){
-        guests = invitees[0]
+      } else{
+        invitees = invitees.map((person)=> (person.stringValue));
+        let guests = invitees[0];
+        for (let i = 1; i < invitees.length - 1; i++){
+          guests += ', ' + invitees[i];
+        }
+        guests += ', and ' + invitees[invitees.length - 1];
+        if (invitees.length === 1){
+          guests = invitees[0]
+        }
+        invitees = guests;
       }
       global.meetingInfo[message.user] = {day: date, time: time, invitees: invitees}
       if (title){
@@ -137,7 +139,7 @@ rtm.on('message', (message) => {
           channel: replyChannel,
           attachments: [
               {
-                "text": `Would you like me to set a meeting with ${guests} at ${time} on ${prettyDate}?`,
+                "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
                 "fallback": "You were unable to set up a meeting. Try again.",
                 "callback_id": "meeting-confirm",
                 "color": "#3AA3E3",
