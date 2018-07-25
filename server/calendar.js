@@ -27,7 +27,7 @@ export default function gCal(token, info, intent, cb) {
         },
       }
     } else if (intent === "meeting_confirm") {
-      
+
     }
 
     calendar.events.insert({
@@ -38,13 +38,21 @@ export default function gCal(token, info, intent, cb) {
         console.log('There was an error contacting the Calendar service: ' + err);
         return cb(err);
       }
-      console.log('Event created:', event.data.htmlLink);
+      console.log('Event created:');
       cb(null, event)
     });
 
+  }
 
+  export function refreshToken () {
+    let client = new google.auth.OAuth2(
+      process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
+    client.setCredentials(token);
+    return client.refreshAccessToken((err,token) => {
+      return token;
+    })
   }
 
   function upper(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
