@@ -105,7 +105,12 @@ rtm.on('message', (message) => {
       }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
       // let location = responses[0].queryResult.parameters.fields.location.stringValue;
-      let duration = responses[0].queryResult.parameters.fields.duration.listValue.values[0].structValue.fields;
+      let duration;
+      console.log('TEST', responses[0].queryResult.parameters.fields.duration);
+      if (responses[0].queryResult.parameters.fields.duration.listValue.values.length !== 0){
+        console.log('DURATION EXISTS');
+        duration = responses[0].queryResult.parameters.fields.duration.listValue.values[0].structValue.fields;
+      }
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // console.log('time', responses[0].queryResult.parameters.fields);
@@ -137,15 +142,17 @@ rtm.on('message', (message) => {
       }
       global.meetingInfo[message.user] = {date: actualDate, invitees: invitees}
       if (title){
-        global.meetingInfo[message.user] = {title: title}
+        global.meetingInfo[message.user].title = title;
+      } else {
+        global.meetingInfo[message.user].title = 'Meeting';
       }
       // if (location) {
-      //   global.meetingInfo[message.user] = {location: location}
+      //   global.meetingInfo[message.user].location = location
       // }
       if (duration){
-	      global.meetingInfo[message.user] = {duration: duration}
+	      global.meetingInfo[message.user].duration = duration;
       } else {
-        global.meetingInfo[message.user] = {duration: {amount: 30, unit: 'min'}}
+        global.meetingInfo[message.user].duration = {amount: 30, unit: 'min'};
       }
       web.chat.postMessage({
           channel: replyChannel,
