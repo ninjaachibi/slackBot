@@ -105,7 +105,12 @@ rtm.on('message', (message) => {
       }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
       // let location = responses[0].queryResult.parameters.fields.location.stringValue;
-      let duration = responses[0].queryResult.parameters.fields.duration.listValue.values[0].structValue.fields;
+      let duration = 0;
+      console.log('TEST', responses[0].queryResult.parameters.fields.duration);
+      if (responses[0].queryResult.parameters.fields.duration.listValue.values.length !== 0){
+        console.log('DURATION EXISTS');
+        duration = responses[0].queryResult.parameters.fields.duration.listValue.values[0].structValue.fields;
+      }
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // console.log('time', responses[0].queryResult.parameters.fields);
@@ -121,9 +126,11 @@ rtm.on('message', (message) => {
       actualDate = actualDate.join('T');
       time = formatTimeString(new Date(time))
       let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
+      let names;
       if (invitees.length === 0){
         return rtm.sendMessage("I need some people for the meeting, otherwise you'll be bored all on your own", replyChannel)
       } else{
+        names = invitees;
         invitees = invitees.map((person)=> (person.stringValue));
         let guests = invitees[0];
         for (let i = 1; i < invitees.length - 1; i++){
@@ -135,17 +142,19 @@ rtm.on('message', (message) => {
         }
         invitees = guests;
       }
-      global.meetingInfo[message.user] = {date: actualDate, invitees: invitees}
+      global.meetingInfo[message.user] = {date: actualDate, invitees: names}
       if (title){
-        global.meetingInfo[message.user] = {title: title}
+        global.meetingInfo[message.user].title = title;
+      } else {
+        global.meetingInfo[message.user].title = 'Meeting';
       }
       // if (location) {
-      //   global.meetingInfo[message.user] = {location: location}
+      //   global.meetingInfo[message.user].location = location
       // }
-      if (duration){
-	      global.meetingInfo[message.user] = {duration: duration}
+      if (duration !== 0){
+	      global.meetingInfo[message.user].duration = duration;
       } else {
-        global.meetingInfo[message.user] = {duration: {amount: 30, unit: 'min'}}
+        global.meetingInfo[message.user].duration = {amount: 30, unit: 'min'};
       }
       web.chat.postMessage({
           channel: replyChannel,

@@ -1,3 +1,4 @@
+import axios from 'axios';
 const express = require('express')
 const app = express();
 var router = express.Router();
@@ -11,8 +12,6 @@ export default function gCal(token, info, intent, cb) {
     console.log('in calendar: token is ', token);
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
     let event;
-
-    console.log('data passed to calendar create', info);
 
     if (intent === "reminder_confirm") {
       let endTime = new Date(info.time)
@@ -31,22 +30,39 @@ export default function gCal(token, info, intent, cb) {
       }
     } else if (intent === "meeting_confirm") {
       let start = info.date;
-      let end = new Date(start);
-      console.log(info.duration);
+      let end = addDuration(new Date(start), info.duration)
 
+      axios.get('https://slack.com/api/users.list', {
+        'headers': {
+          'Authorization': 'Bearer' + process.env.BOT_OAUTH_TOKEN
+        }
+      })
+        .then((userList) => {
+          userList = JSON.parse(userList)
+          console.log('Inve', info.invitees);
+          let emailList = info.invitees.map((invite) => {
+            let email;console.log('USERAS', userList);
+            userList.members.forEach((user) => {
+              if (user.display_name === invite) {
+                email = {'email': user.email };
+              }
+            })
+            return email
+          })
+
+          console.log('EMAILs', emailList);
       event = {
-        'summary': info.task,
+        'summary': info.title,
         'start': {
-          'dateTime': '2018-07-25T17:00:00-07:00',
+          'dateTime': start,
         },
         'end': {
-          'dateTime': '2018-07-25T20:00:00-07:00'
+          'dateTime': end
         },
         'location': info.location,
-        'attendees': [
-          {'email': 'kkpatel@bu.edu'},
-        ]
+        'attendees': emailList
       }
+    })
     }
 
     calendar.events.insert({
@@ -84,16 +100,18 @@ export default function gCal(token, info, intent, cb) {
     let total = 0;
     let {unit, amount} = duration;
     if(unit.stringValue === 'h') {
-      total = (amount.numberValue * 3600 * 1000);
+      total = amount.numberValue * 3600 * 1000;
     }
     else if(unit.stringValue === 'min') {
-      total = (amount.numberValue * 60 * 1000);
+      total = amount.numberValue * 60 * 1000;
     }
     else if(unit.stringValue === 'day' ) {
-      total = (amount.numberValue * 24 * 3600 * 1000);
+      total = amount.numberValue * 24 * 3600 * 1000;
     }
     else {
-      total = (amount.numberValue * 1800 * 1000);
+      total = 1800 * 1000;
     }
-    return total; //make this endTime
+    let ret = startTime.getTime() + total;
+    ret = new Date(ret).toISOString();
+    return ret; //make this endTime
   }

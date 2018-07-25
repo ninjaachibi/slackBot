@@ -51,7 +51,7 @@ app.post('/slack', (req, res) => {
     res.send(`I've cancelled the meeting but it could have been really important`)
   }else {
     const userId = payload.user.id
-    const info = global.reminderInfo[userId]
+    // const info = global.reminderInfo[userId]
     User.findOne({slackId: userId})
       .then(async (user) => {
         console.log('User is', user)
@@ -65,10 +65,15 @@ app.post('/slack', (req, res) => {
           console.log('**************************refreshing token***********************');
           //refresh token
           console.log('token is',user.gCalToken);
-          let token = await refreshToken(user.gCalToken);
-          console.log('new token is ',token);
-          user.gCalToken = token;
-          await user.save();
+
+          try {
+            let token = await refreshToken(user.gCalToken);
+            console.log('new token is ',token);
+            user.gCalToken = token;
+            await user.save();
+          } catch (e){
+            console.log('Catch', e);
+          }
         }
         else {
           slackFinish(payload)
@@ -77,9 +82,14 @@ app.post('/slack', (req, res) => {
               res.send(`I've set a reminder but you should really remember things on your own`)
             } else if(payload.callback_id === 'meeting_confirm'){
               res.send(`The meeting is set, but it seems kinda pointless`)
+            } else{
+              console.log('else');
             }
           })
         }
+      })
+      .catch(err => {
+        console.log('ERROR', err);
       })
   }
 })
@@ -88,7 +98,7 @@ export default function slackFinish(payload) {
   return User.findOne({slackId: payload.user.id})
   .then((user) => {
     let token = user.gCalToken
-    let info
+    let info;
     if (payload.callback_id === 'reminder_confirm') {
       info = global.reminderInfo[payload.user.id]
     } else if (payload.callback_id === 'meeting_confirm') {
@@ -98,13 +108,15 @@ export default function slackFinish(payload) {
       gCal(token, info, payload.callback_id, (err, succ) => {
         if (err) {
           console.log('ERROR', err);
-          resolve(true)
+          reject(err);
         } else {
           console.log('SUCCESS', succ.data.htmlLink)
-          reject(err);
+          resolve(true)
         }
       })
     })
+  }).catch(err => {
+    console.log('slackFinishErr', err);
   })
 }
 
