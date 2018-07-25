@@ -7,6 +7,9 @@ const languageCode = 'en-US';
 // Instantiate a DialogFlow client.
 const dialogflow = require('dialogflow');
 const sessionClient = new dialogflow.SessionsClient();
+import mongoose from 'mongoose';
+import models from './models/models.js'
+const {User, Task} = models
 
 // Define session path
 const sessionPath = sessionClient.sessionPath(projectId, sessionId);
@@ -18,34 +21,27 @@ rtm.start();
 
 const web = new WebClient(token);
 
-
 global.reminderInfo = {}
-//Sent Message to General
-// web.channels.list()
-//   .then((res) => {
-//     // Take any channel for which the bot is a member
-//     console.log(res)
-//     const channel = res.channels.find(c => c.is_member);
-//
-//     if (channel) {
-//       rtm.sendMessage('Hello World!', channel.id)
-//         .then((msg) => console.log(`Message sent to channel ${channel.name} with ts:${msg.ts}`))
-//         .catch(console.error);
-//     } else {
-//       console.log('This bot does not belong to any channel, invite it')
-//     }
-//   });
-
 
 rtm.on('message', (message) => {
   // console.log(message)
   if ( (message.subtype && message.subtype === 'bot_message') ||
        (message.subtype && message.subtype === 'message_changed') ||
        (!message.subtype && message.user === rtm.activeUserId) ||
-        (message.channel[0] !== 'D')) {
+       (message.channel[0] !== 'D') ) {
          return;
        }
-  let replyChannel = message.channel
+
+  let replyChannel = message.channel //Slack User Id
+  User.findOne({slackId: message.user})
+    .then((user) => {
+      if (!user) {
+        return new User({
+          slackId: message.user
+        }).save()
+      }
+    })
+
   let request = {
     session: sessionPath,
     queryInput: {
@@ -55,12 +51,11 @@ rtm.on('message', (message) => {
       },
     },
   };
+
   sessionClient
   .detectIntent(request)
   .then(responses => {
-    console.log("RESPONSE", responses[0].queryResult.parameters);
     let intent = responses[0].queryResult.intent.displayName;
-    console.log('Intent', intent);
     if (intent === 'Reminder'){
       let date = responses[0].queryResult.parameters.fields.date.stringValue;
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
@@ -71,9 +66,11 @@ rtm.on('message', (message) => {
         return rtm.sendMessage(`I need a date to create a reminder on, otherwise you're going to ${title} on the wrong day and blame me`, replyChannel)
       }
       let prettyDate = new Date(date)
+      global.reminderInfo[message.user] = {task: title, time: prettyDate}
       prettyDate = prettyDate.toDateString();
+
       // Response Call
-      global.reminderInfo[message.user] = {task: title, time: date}
+
       web.chat.postMessage({
         channel: replyChannel,
         attachments: [

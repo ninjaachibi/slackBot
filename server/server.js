@@ -3,7 +3,9 @@ const path = require('path')
 import gCal from './calendar';
 import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
-// const slack = require('./slack')
+const slack = require('./slack')
+import models from './models/models.js'
+const {User, Task} = models
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
@@ -38,18 +40,50 @@ app.get('/ping', (req, res) => {
 let payload = ""
 app.post('/slack', (req, res) => {
   payload = JSON.parse(req.body.payload)
-  if (payload.callback_id === "reminder_confirm") {
-    res.redirect('/createReminder')
-  } else if (payload.callback_id === "meeting_confirm") {
-    res.redirect('/createMeeting')
-  } else {
-    res.redirect('/ping')
-  }
-})
-
-app.get('/createReminder', (req, res) => {
+  console.log(payload)
   const userId = payload.user.id
   const info = global.reminderInfo[userId]
+  User.findOne({slackId: userId})
+    .then((user) => {
+      console.log('User is', user)
+      console.log('Token is', !!user.gCalToken)
+      if (!user.gCalToken) {
+        let url = generateAuthUrl(payload);
+        //send to slack
+        res.send(`You forgot to authorize your google account ${url}`)
+      } else {
+        slackFinish(payload)
+        .then(() => {
+          res.send(`Your reminder is set to go!`)
+        })
+      }
+    })
+})
+
+function slackFinish(payload) {
+  return User.findOne({slackId: payload.user.id})
+    .then((user) => {
+      let token = user.gCalToken
+      const info = global.reminderInfo[payload.user.id]
+      if (payload.callback_id === "reminder_confirm") {
+        console.log('token is ',token);
+        return new Promise ((resolve, reject) => {
+          gCal(token, info.task, info.time, (err, succ) => {
+            if (err) {
+              console.log(err)
+            } else {
+              console.log(succ)
+            }
+            resolve(true)
+          })
+        })
+      }
+    })
+}
+
+
+app.get('/createReminder', (req, res) => {
+
   // User.findOne({slackid: userId})
   //.then( //check to see if there's an auth token)
   //if not slack asks the user to click the link
@@ -66,10 +100,6 @@ app.get('/createMeeting', (req, res) => {
   res.send("DoneIt")
 })
 
-app.post('/response', (req, res) => {
-  console.log('---------------TEST------------');
-  res.json(req)
-})
 
 
 //Do Not Touch This Bottom Part
