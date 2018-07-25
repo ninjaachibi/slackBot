@@ -49,7 +49,7 @@ app.post('/slack', (req, res) => {
     const userId = payload.user.id
     const info = global.reminderInfo[userId]
     User.findOne({slackId: userId})
-      .then((user) => {
+      .then(async (user) => {
         console.log('User is', user)
         console.log('Token is', !!user.gCalToken)
         if (!user.gCalToken) {
@@ -61,8 +61,9 @@ app.post('/slack', (req, res) => {
           console.log('**************************refreshing token***********************');
           //refresh token
           let token = refreshToken(user.gCalToken);
+          console.log(token);
           user.gCalToken = token;
-          user.save();
+          await user.save();
         }
         else {
           slackFinish(payload)
@@ -90,12 +91,13 @@ export default function slackFinish(payload) {
             if (err) {
               console.log('ERROR', err);
             } else {
-              console.log('SUCCESS', succ)
+              console.log('SUCCESS', succ.data.htmlLink)
             }
             resolve(true)
           })
         })
-    })
+    }
+  })
 }
 
 

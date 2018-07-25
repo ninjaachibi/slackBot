@@ -27,7 +27,7 @@ export default function gCal(token, info, intent, cb) {
         },
       }
     } else if (intent === "meeting_confirm") {
-      
+
     }
 
     calendar.events.insert({
@@ -38,7 +38,7 @@ export default function gCal(token, info, intent, cb) {
         console.log('There was an error contacting the Calendar service: ' + err);
         return cb(err);
       }
-      console.log('Event created:', event.data.htmlLink);
+      console.log('Event created:');
       cb(null, event)
     });
 
