@@ -76,7 +76,7 @@ rtm.on('message', (message) => {
         channel: replyChannel,
         attachments: [
               {
-                "text": `Would you like me to remind you to ${title} on ${prettyDate}`,
+                "text": `Would you like me to remind you to ${title}  on ${prettyDate}`,
                 "fallback": "You were unable to set up a reminder",
                 "callback_id": "reminder_confirm",
                 "color": "#3AA3E3",
@@ -104,6 +104,7 @@ rtm.on('message', (message) => {
         return rtm.sendMessage('I need a date to create the meeting on, otherwise people will meet on the wrong day', replyChannel)
       }
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
+      let duration = responses[0].queryResult.parameters.fields.duration;
       let prettyDate = new Date(date)
       prettyDate = prettyDate.toDateString();
       // console.log('time', responses[0].queryResult.parameters.fields);
@@ -128,6 +129,9 @@ rtm.on('message', (message) => {
       global.meetingInfo[message.user] = {day: date, time: time, invitees: invitees}
       if (title){
         global.meetingInfo[message.user] = {title: title}
+      }
+      if (duration){
+        global.meetingInfo[message.user] = {duration: duration}
       }
       web.chat.postMessage({
           channel: replyChannel,
