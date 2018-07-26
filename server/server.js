@@ -18,13 +18,13 @@ cron.schedule('*/15 * * * * *', () => {
   Meeting.find()
   .then(meetings => {
     meetings.forEach(meeting => {
-      console.log('action = ', meeting.action);
-      console.log('user = ', meeting.user);
-      console.log('info = ', meeting.info);
-      console.log('deadline = ', meeting.deadline);
+      // console.log('action = ', meeting.action);
+      // console.log('user = ', meeting.user);
+      // console.log('info = ', meeting.info);
+      // console.log('deadline = ', meeting.deadline);
       if (meeting.deadline < new Date().getTime()){
         if (meeting.action === '2hourCancel'){
-          console.log('MMMMMMMEEEEETTTTINg', meeting);
+          // console.log('MMMMMMMEEEEETTTTINg', meeting);
           Meeting.remove(meeting)
           .then(()=>{ console.log('Meeting was removed************************************************************************');})
         } else {

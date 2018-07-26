@@ -4,15 +4,16 @@ const app = express();
 var router = express.Router();
 const {google} = require('googleapis');
 import models from './models/models.js'
-const { Meeting } = models
+const { User, Meeting } = models
 import getNewTime from './slack.js'
 
 export default function gCal(token, info, intent, cb) {
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
-
     oAuth2Client.setCredentials(token);
     console.log('in calendar: token is ', token);
+    console.log('**************oAuth2Client IS *********************',oAuth2Client);
+
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
     let event;
 
@@ -58,7 +59,7 @@ export default function gCal(token, info, intent, cb) {
         .then((userList) => {
           // userList = userList)
           // console.log('Inve', info.invitees);
-          let slackReplyIds = []
+          let gCalIds = []
           let emailList = info.invitees.map((invite) => {
             let email;
             // console.log('USERAS', userList.data.members);
@@ -67,18 +68,48 @@ export default function gCal(token, info, intent, cb) {
               console.log(user)
               if (user.profile.display_name === invite.stringValue) {
                 email = {'email': user.profile.email };
-                // slackReplyIds.push({'id': user.id, name: user.profile.display_name})
+                gCalIds.push({'id': user.id, name: user.profile.display_name})
               }
             })
             return email
           })
+          //push tokens for invitees into gCalTokens array
+          let gCalTokens = [];
+          gCalIds.forEach((id) => {
+            User.findOne({slackId: id})
+              .then((user) => {
+                gCalTokens.push(user.gCalToken);
+              })
+          })
+          //look through people's busy times
+          gCalTokens.forEach((tempToken) => {
+            const tempOAuth = new google.auth.OAuth2(
+              process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
+            tempOAuth.setCredentials(tempToken);
+            const tempCalendar = google.calendar({version: 'v3', auth: tempOAuth});
+
+            let searchEnd = new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000
+            tempCalendar.freebusy.query({
+              "timeMin": start,
+              "timeMax": new Date(searchEnd).toISOString(),
+              "items": [
+                {
+                  "id": "primary"
+                }
+              ]
+            })
+              .then(resp => {
+                console.log('busy times', resp);
+              })
+
+
+          })
+
           // console.log(slackReplyIds)
           // funcs.sendConfirmationEmails(slackReplyIds)
 
       Promise.all(emailList.map(email => {
         console.log('email', email);
-
-
         return Meeting.find({invitees: email})
       }))
       .then(result => {
