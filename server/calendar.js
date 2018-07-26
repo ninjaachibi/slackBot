@@ -3,6 +3,8 @@ const express = require('express')
 const app = express();
 var router = express.Router();
 const {google} = require('googleapis');
+import models from './models/models.js'
+const { Meeting } = models
 var getNewTime = require('./slack.js');
 
 export default function gCal(token, info, intent, cb) {
@@ -55,7 +57,7 @@ export default function gCal(token, info, intent, cb) {
       })
         .then((userList) => {
           // userList = userList)
-          console.log('Inve', info.invitees);
+          // console.log('Inve', info.invitees);
           let emailList = info.invitees.map((invite) => {
             let email;
             // console.log('USERAS', userList.data.members);
@@ -67,8 +69,21 @@ export default function gCal(token, info, intent, cb) {
             })
             return email
           })
-
-          console.log('EMAILs', emailList);
+      Promise.all(emailList.map(email => {
+        console.log('email', email);
+        return Meeting.find({invitees: email})
+      }))
+      .then(result => {
+        let free = true;
+        // console.log('result', result);
+        result[0].forEach(event => {
+          // console.log('Event', event.startTime);
+          if (overlap(event.startTime, event.endTime, start, end)){
+            free = false
+          }
+        })
+        console.log('THE EVENT IS FREE', free);
+      })
       event = {
         'summary': info.title,
         'start': {
@@ -77,7 +92,7 @@ export default function gCal(token, info, intent, cb) {
         'end': {
           'dateTime': end
         },
-        'location': info.location,
+        // 'location': info.location,
         'attendees': emailList
       }
       calendar.events.insert({
@@ -89,7 +104,18 @@ export default function gCal(token, info, intent, cb) {
           return cb(err);
         }
         console.log('Event created:');
-        cb(null, event)
+        let meet = new Meeting({
+          startTime: start,
+          endTime: end,
+          invitees: emailList
+        }).save()
+        .then(()=>{
+          cb(null, event)
+        })
+        .catch(err => {
+          console.log('Error', err);
+        })
+
       });
 
     })
@@ -132,4 +158,15 @@ export default function gCal(token, info, intent, cb) {
     let ret = startTime.getTime() + total;
     ret = new Date(ret).toISOString();
     return ret; //make this endTime
+  }
+
+  function overlap(start, end, stest, etest){
+    let s = new Date(start).getTime();
+    let e = new Date(end).getTime();
+    let sT = new Date(stest).getTime();
+    let eT = new Date(etest).getTime();
+    let startOverlap = s <= sT && sT <= e;
+    let endOverlap = s <= eT && eT <= e;
+    let overlap = startOverlap || endOverlap;
+    return overlap
   }
