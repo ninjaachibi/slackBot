@@ -47,8 +47,8 @@ export default function gCal(token, info, intent, cb) {
       let start = info.date;
       let end = addDuration(new Date(start), info.duration)
       //We can add the function that is being imported from Slack here to check the start and end.
+      // console.log('END', end);
       //checkTime(start, end) { ---- }
-      console.log('END', end);
       // let slackIdList;
       axios.get('https://slack.com/api/users.list', {
         'headers': {
@@ -64,7 +64,7 @@ export default function gCal(token, info, intent, cb) {
             // console.log('USERAS', userList.data.members);
             userList.data.members.forEach((user) => {
               // console.log('dn', user.profile.display_name, 'user', invite);
-              console.log(user)
+              // console.log(user)
               if (user.profile.display_name === invite.stringValue) {
                 email = {'email': user.profile.email };
                 // slackReplyIds.push({'id': user.id, name: user.profile.display_name})
@@ -76,7 +76,7 @@ export default function gCal(token, info, intent, cb) {
           // funcs.sendConfirmationEmails(slackReplyIds)
 
       Promise.all(emailList.map(email => {
-        console.log('email', email);
+        // console.log('email', email);
 
 
         return Meeting.find({invitees: email})
@@ -113,18 +113,7 @@ export default function gCal(token, info, intent, cb) {
           return cb(err);
         }
         console.log('Event created:');
-        let meet = new Meeting({
-          startTime: start,
-          endTime: end,
-          invitees: emailList
-        }).save()
-        .then(()=>{
-          cb(null, event)
-        })
-        .catch(err => {
-          console.log('Error', err);
-        })
-
+        cb(null, event)
       });
 
     })
