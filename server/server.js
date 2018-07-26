@@ -13,7 +13,7 @@ var cron = require('node-cron');
 // import axios from 'axios';
 // axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
 
-cron.schedule('1 * * * *', () => {
+cron.schedule('*/15 * * * * *', () => {
   console.log('CRON');
   Meeting.find()
   .then(meetings => {
@@ -22,12 +22,22 @@ cron.schedule('1 * * * *', () => {
       console.log('user = ', meeting.user);
       console.log('info = ', meeting.info);
       console.log('deadline = ', meeting.deadline);
+      if (meeting.deadline < new Date().getTime()){
+        if (action === '2hourCancel'){
+          Meeting.remove(meeting)
+          .then(()=>{ console.log('Meeting was removed');})
+        } else {
+
+        }
+      } else {
+
+      }
     })
   })
   .catch(err => {
     console.log('Cron Error', err);
   })
-}, true)
+})
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")

@@ -204,6 +204,7 @@ rtm.on('message', (message) => {
             if(!allAccess) {
               global.meetingInfo[message.user].noAccessUsers = noAccessUsers;
               //SEND ACCESS REQUESTS TO noAccessUsers
+              // sendConfirmationEmails(noAccessUsers);
               web.chat.postMessage({
                   channel: replyChannel,
                   attachments: [
@@ -273,24 +274,14 @@ rtm.on('message', (message) => {
       return rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
     }
   })
-
-
   .catch(err => {
     console.error('ERROR:', err);
   });
-
-  // How to send a simple message
-  // rtm.sendMessage('Hey Bro', replyChannel)
-  //   .then((msg) => console.log(`Message sent to channel ${replyChannel} with ts:${msg.ts}`))
-  //   .catch(console.error);
-  // console.log(`(channel:${message.channel}) ${message.user} says: ${message.text}`);
 })
-
 //export this function out to Calendar
 
-const funcs = {
-  //GetTimeSlots For Message Options
-  getNewTime(channel, timeSlots) {
+//GetTimeSlots For Message Options
+export default function getNewTime(channel, timeSlots) {
     let times = timeSlots
     web.chat.postMessage({
         channel: channel,
@@ -353,23 +344,23 @@ const funcs = {
             }
         ]
       })
-  },
+  }
 
   //Send Confirmation Emails to Each User to make sure they are registered
 
-  sendConfirmationEmails(ids) {
+function sendConfirmationEmails(ids) {
     ids.forEach((id) => {
       console.log(id)
-      User.findOne({slackId: id.id})
+      User.findOne({slackId: id})
       .then((user) => {
         if (!user.gCal) {
-          let url = generateAuthUrl(id.id);
-          rtm.sendMessage(`Might want authorize Slack to access google calendars \n ${url}`, user.channel)
+          let url = generateAuthUrl(id);
+          rtm.sendMessage(`I don't know why but someone wants to invite you to something, so you need authorize Slack to access google calendars \n ${url}`, user.channel)
         }
       })
     })
   }
-}
+
 
 
 function formatTimeString(date) {
@@ -379,5 +370,3 @@ function formatTimeString(date) {
     , timeStr=[fixHour(h), pad(m)].join(':');
   return timeStr + ' ' + (h < 12 ? 'AM' : 'PM');
 }
-
-export default funcs
