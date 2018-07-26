@@ -5,6 +5,7 @@ var router = express.Router();
 const {google} = require('googleapis');
 import models from './models/models.js'
 const { Meeting } = models
+var getNewTime = require('./slack.js');
 
 export default function gCal(token, info, intent, cb) {
   const oAuth2Client = new google.auth.OAuth2(
@@ -43,8 +44,11 @@ export default function gCal(token, info, intent, cb) {
         cb(null, event)
       });
     } else if (intent === "meeting_confirm") {
+      console.log(getNewTime)
       let start = info.date;
       let end = addDuration(new Date(start), info.duration)
+      //We can add the function that is being imported from Slack here to check the start and end.
+      //checkTime(start, end) { ---- }
       console.log('END', end);
       axios.get('https://slack.com/api/users.list', {
         'headers': {
@@ -127,7 +131,6 @@ export default function gCal(token, info, intent, cb) {
     return new Promise((resolve, reject) => {
       client.refreshAccessToken((err,token) => {
         if(err) reject(err)
-        console.log('refreshed token');
         resolve(token);
       })
     })

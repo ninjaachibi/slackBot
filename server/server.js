@@ -9,7 +9,7 @@ const { User } = models
 
 // For revoking refresh tokens
 // import axios from 'axios';
-// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBsBbKV2YissPEIqYGT51HgTZi_MIgX4qmksG5zSmZRvIerK204f9hEGj1p0XaeaiwbAUA4ErMuQoAuDATAphQso1joWs4582bFsOZaWR4s_FKMr7Gn4j67oE9w`)
+// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
@@ -44,7 +44,7 @@ app.get('/ping', (req, res) => {
 let payload = ""
 app.post('/slack', (req, res) => {
   payload = JSON.parse(req.body.payload)
-  console.log("PAYLOAD", payload)
+  // console.log("PAYLOAD", payload.actions[0].selected_options[0].value)
   if (payload.actions[0].value === 'cancel' && payload.callback_id === 'reminder_confirm'){
     res.send(`I've cancelled your request, but if we're being honest, without that reminder, you're going to forget`)
   } else if (payload.actions[0].value === 'cancel' && payload.callback_id === 'meeting_confirm') {
