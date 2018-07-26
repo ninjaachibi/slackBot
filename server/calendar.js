@@ -5,7 +5,7 @@ var router = express.Router();
 const {google} = require('googleapis');
 import models from './models/models.js'
 const { Meeting } = models
-import funcs from './slack.js'
+import getNewTime from './slack.js'
 
 export default function gCal(token, info, intent, cb) {
   const oAuth2Client = new google.auth.OAuth2(
@@ -49,7 +49,7 @@ export default function gCal(token, info, intent, cb) {
       //We can add the function that is being imported from Slack here to check the start and end.
       //checkTime(start, end) { ---- }
       console.log('END', end);
-      let slackIdList;
+      // let slackIdList;
       axios.get('https://slack.com/api/users.list', {
         'headers': {
           'Authorization': 'Bearer ' + process.env.BOT_OAUTH_TOKEN
@@ -67,13 +67,13 @@ export default function gCal(token, info, intent, cb) {
               console.log(user)
               if (user.profile.display_name === invite.stringValue) {
                 email = {'email': user.profile.email };
-                slackReplyIds.push({'id': user.id, name: user.profile.display_name})
+                // slackReplyIds.push({'id': user.id, name: user.profile.display_name})
               }
             })
             return email
           })
-          console.log(slackReplyIds)
-          funcs.sendConfirmationEmails(slackReplyIds)
+          // console.log(slackReplyIds)
+          // funcs.sendConfirmationEmails(slackReplyIds)
 
       Promise.all(emailList.map(email => {
         console.log('email', email);
