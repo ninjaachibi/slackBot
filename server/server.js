@@ -71,8 +71,23 @@ cron.schedule('*/15 * * * * *', () => {
             }
           })
           if (allGood){
-            console.log('ALL GOOOD MAKE MEETING');
             //Make the event as normal
+
+            User.findOne({slackId: userId})
+            .then((creator) => {
+              let token = creator.gCalToken;
+              let info = JSON.parse(meeting.info)
+              gCal(token, info, "meeting_confirm", (err, succ) => {
+                if (err) {
+                  console.log('ERROR', err);
+                  // reject(err);
+                } else {
+                  console.log('SUCCESS', succ.data.htmlLink)
+                  // resolve(true)
+                }
+              })
+            })
+
           } else {
             let updatedMeeting = JSON.parse(meeting.info)
             updatedMeeting.noAccessUsers = stillWrong
