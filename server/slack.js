@@ -9,7 +9,7 @@ const dialogflow = require('dialogflow');
 const sessionClient = new dialogflow.SessionsClient();
 import mongoose from 'mongoose';
 import models from './models/models.js'
-const {User, Task} = models
+const {User} = models
 
 // Define session path
 const sessionPath = sessionClient.sessionPath(projectId, sessionId);
@@ -106,7 +106,6 @@ rtm.on('message', (message) => {
       let title = responses[0].queryResult.parameters.fields.Subject.stringValue;
       // let location = responses[0].queryResult.parameters.fields.location.stringValue;
       let duration = 0;
-      console.log('TEST', responses[0].queryResult.parameters.fields.duration);
       if (responses[0].queryResult.parameters.fields.duration.listValue.values.length !== 0){
         console.log('DURATION EXISTS');
         duration = responses[0].queryResult.parameters.fields.duration.listValue.values[0].structValue.fields;

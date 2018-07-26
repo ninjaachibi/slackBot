@@ -14,6 +14,7 @@ export default function gCal(token, info, intent, cb) {
     let event;
 
     if (intent === "reminder_confirm") {
+      console.log('i', info);
       let endTime = new Date(info.time)
       endTime.setDate(info.time.getDate()+1)
       endTime = endTime.toISOString().substring(0, 10)
@@ -28,23 +29,36 @@ export default function gCal(token, info, intent, cb) {
           'date': endTime,
         },
       }
+      calendar.events.insert({
+        calendarId: 'primary',
+        resource: event,
+      }, function(err, event) {
+        if (err) {
+          console.log('There was an error contacting the Calendar service: ' + err);
+          return cb(err);
+        }
+        console.log('Event created:');
+        cb(null, event)
+      });
     } else if (intent === "meeting_confirm") {
       let start = info.date;
       let end = addDuration(new Date(start), info.duration)
-
+      console.log('END', end);
       axios.get('https://slack.com/api/users.list', {
         'headers': {
-          'Authorization': 'Bearer' + process.env.BOT_OAUTH_TOKEN
+          'Authorization': 'Bearer ' + process.env.BOT_OAUTH_TOKEN
         }
       })
         .then((userList) => {
-          userList = JSON.parse(userList)
+          // userList = userList)
           console.log('Inve', info.invitees);
           let emailList = info.invitees.map((invite) => {
-            let email;console.log('USERAS', userList);
-            userList.members.forEach((user) => {
-              if (user.display_name === invite) {
-                email = {'email': user.email };
+            let email;
+            // console.log('USERAS', userList.data.members);
+            userList.data.members.forEach((user) => {
+              // console.log('dn', user.profile.display_name, 'user', invite);
+              if (user.profile.display_name === invite.stringValue) {
+                email = {'email': user.profile.email };
               }
             })
             return email
@@ -62,20 +76,21 @@ export default function gCal(token, info, intent, cb) {
         'location': info.location,
         'attendees': emailList
       }
+      calendar.events.insert({
+        calendarId: 'primary',
+        resource: event,
+      }, function(err, event) {
+        if (err) {
+          console.log('There was an error contacting the Calendar service: ' + err);
+          return cb(err);
+        }
+        console.log('Event created:');
+        cb(null, event)
+      });
+
     })
     }
 
-    calendar.events.insert({
-      calendarId: 'primary',
-      resource: event,
-    }, function(err, event) {
-      if (err) {
-        console.log('There was an error contacting the Calendar service: ' + err);
-        return cb(err);
-      }
-      console.log('Event created:');
-      cb(null, event)
-    });
 
   }
 
