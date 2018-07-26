@@ -3,7 +3,7 @@ const { RTMClient, WebClient } = require('@slack/client');
 const projectId = process.env.DIALOGFLOW_PROJECT_ID;
 const sessionId = 'quickstart-session-id';
 const languageCode = 'en-US';
-
+import axios from 'axios'
 // Instantiate a DialogFlow client.
 const dialogflow = require('dialogflow');
 const sessionClient = new dialogflow.SessionsClient();
@@ -66,6 +66,9 @@ rtm.on('message', (message) => {
       if (!date){
         return rtm.sendMessage(`I need a date to create a reminder on, otherwise you're going to ${title} on the wrong day and blame me`, replyChannel)
       }
+      if (new Date(date).getTime() < new Date().getTime()){
+        return rtm.sendMessage(`Unfortunately that time has already passed, you're going to have to try harder`, replyChannel)
+      }
       let prettyDate = new Date(date)
       global.reminderInfo[message.user] = {task: title, time: prettyDate, channel: replyChannel}
       prettyDate = prettyDate.toDateString();
@@ -119,10 +122,16 @@ rtm.on('message', (message) => {
       }
       let day = date.split('T')[0];
       let hour = time.split('T')[1];
-      let actualDate = []
-      actualDate.push(day)
-      actualDate.push(hour)
+      let actualDate = [];
+      actualDate.push(day);
+      actualDate.push(hour);
       actualDate = actualDate.join('T');
+      let schedule;
+      if (new Date(actualDate).getTime() < new Date().getTime()){
+        return rtm.sendMessage(`Unfortunately your chance to meet at that time has passed you by, try again`, replyChannel)
+      } else if ( new Date(actualDate).getTime() < new Date().getTime() + 14400000){
+        return rtm.sendMessage(`That's simply too close to schedule, I'm not perfect`, replyChannel)
+      } else
       time = formatTimeString(new Date(time))
       let invitees = responses[0].queryResult.parameters.fields['given-name'].listValue.values;
       let names;
@@ -155,31 +164,96 @@ rtm.on('message', (message) => {
       } else {
         global.meetingInfo[message.user].duration = {amount: 30, unit: 'min'};
       }
-      web.chat.postMessage({
-          channel: replyChannel,
-          attachments: [
-              {
-                "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
-                "fallback": "You were unable to set up a meeting. Try again.",
-                "callback_id": "meeting_confirm",
-                "color": "#3AA3E3",
-                "attachment_type": "default",
-                "actions": [
-                  {
-                    "name": "response",
-                    "text": "Confirm",
-                    "type": "button",
-                    "value": "confirm"
-                  },
-                  {
-                    "name": "response",
-                    "text": "Cancel",
-                    "type": "button",
-                    "value": "cancel"
-                  }
-                ]
+      axios.get('https://slack.com/api/users.list', {
+        'headers': {
+          'Authorization': 'Bearer ' + process.env.BOT_OAUTH_TOKEN
+        }
+      })
+        .then((userList) => {
+          // console.log('Inve', invitees);
+          let idList = names.map((invite) => {
+            let id;
+            // console.log('USERAS', userList.data.members);
+            userList.data.members.forEach((user) => {
+              // console.log('dn', user.profile.display_name, 'user', invite);
+              if (user.profile.display_name === invite.stringValue) {
+                id = user.id;
               }
-          ]
+            })
+            return id
+          })
+          Promise.all(idList.map(id => {
+            // console.log('email', email);
+            return User.find({slackId: id})
+          }))
+          .then(result => {
+            result.forEach(user => {
+              if (!user.gCalToken){
+                web.chat.postMessage({
+                    channel: replyChannel,
+                    attachments: [
+                        {
+                          "text": `So listen, not everyone you invited has given me acess to their google calendars. I'll try and get them to confirm but I'm lazy so I'll probably give up after like two hours. At that point, I can either just schedule the meeting without those people who haven't given me access, or I can just cancel it and let you deal with them in person`,
+                          "fallback": "FAIL",
+                          "callback_id": "meeting_confirm",
+                          "color": "#3AA3E3",
+                          "attachment_type": "default",
+                          "actions": [
+                            {
+                              "name": "2hourCancel",
+                              "text": "Cancel it",
+                              "type": "button",
+                              "value": "2hourCancel"
+                            },
+                            {
+                              "name": "2hourCreate",
+                              "text": "Create it without them",
+                              "type": "button",
+                              "value": "2hourCancel"
+                            },
+                            {
+                              "name": "response",
+                              "text": "Cancel the event completely",
+                              "type": "button",
+                              "value": "cancel"
+                            }
+                          ]
+                        }
+                    ]
+                  })
+              } else {
+                web.chat.postMessage({
+                    channel: replyChannel,
+                    attachments: [
+                        {
+                          "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
+                          "fallback": "You were unable to set up a meeting. Try again.",
+                          "callback_id": "meeting_confirm",
+                          "color": "#3AA3E3",
+                          "attachment_type": "default",
+                          "actions": [
+                            {
+                              "name": "response",
+                              "text": "Confirm",
+                              "type": "button",
+                              "value": "confirm"
+                            },
+                            {
+                              "name": "response",
+                              "text": "Cancel",
+                              "type": "button",
+                              "value": "cancel"
+                            }
+                          ]
+                        }
+                    ]
+                  })
+              }
+            })
+        })
+      })
+        .catch(err => {
+          console.log('Fetch Error', err);
         })
     } else {
       return rtm.sendMessage(responses[0].queryResult.fulfillmentText, replyChannel)
