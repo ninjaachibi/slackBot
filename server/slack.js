@@ -9,7 +9,11 @@ const dialogflow = require('dialogflow');
 const sessionClient = new dialogflow.SessionsClient();
 import mongoose from 'mongoose';
 import models from './models/models.js'
-const {User} = models
+const {User} = models;
+
+//GCal WebClient
+import gCal, {refreshToken} from './calendar';
+import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 
 // Define session path
 const sessionPath = sessionClient.sessionPath(projectId, sessionId);
@@ -32,13 +36,15 @@ rtm.on('message', (message) => {
        (message.channel[0] !== 'D') ) {
          return;
        }
+  console.log('The MESSAGE IS', message)
 
-  let replyChannel = message.channel //Slack User Id
+  let replyChannel = message.channel //Slack Channel
   User.findOne({slackId: message.user})
     .then((user) => {
       if (!user) {
         return new User({
-          slackId: message.user
+          slackId: message.user,
+          channel: message.channel
         }).save()
       }
     })
@@ -199,69 +205,88 @@ rtm.on('message', (message) => {
 })
 
 //export this function out to Calendar
-module.exports = function getNewTime(channel, timeSlots) {
-  let times = timeSlots
-  web.chat.postMessage({
-      channel: channel,
-      attachments: [
-          {
-            "text": `Do any of these other times work?`,
-            "fallback": "You were unable to set up a meeting. Try again.",
-            "callback_id": "meeting_confirm",
-            "color": "#3AA3E3",
-            "attachment_type": "default",
-            "actions": [
-                    {
-                      "name": "times_list",
-                      "text": "Pick a time...",
-                      "type": "select",
-                      "options": [
-                        {
-                          "text": times[0],
-                          "value": times[0]
-                        },
-                        {
-                          "text": times[1],
-                          "value": times[1]
-                        },
-                        {
-                          "text": times[2],
-                          "value": times[2]
-                        },
-                        {
-                          "text": times[3],
-                          "value": times[3]
-                        },
-                        {
-                          "text": times[4],
-                          "value": times[4]
-                        },
-                        {
-                          "text": times[5],
-                          "value": times[5]
-                        },
-                        {
-                          "text": times[6],
-                          "value": times[6]
-                        },
-                        {
-                          "text": times[7],
-                          "value": times[7]
-                        },
-                        {
-                          "text": times[8],
-                          "value": times[8]
-                        },
-                        {
-                          "text": times[9],
-                          "value": times[9]
-                        },
-                      ]
-                    }
-                ]
-          }
-      ]
+
+const funcs = {
+  //GetTimeSlots For Message Options
+  getNewTime(channel, timeSlots) {
+    let times = timeSlots
+    web.chat.postMessage({
+        channel: channel,
+        attachments: [
+            {
+              "text": `Do any of these other times work?`,
+              "fallback": "You were unable to set up a meeting. Try again.",
+              "callback_id": "meeting_confirm",
+              "color": "#3AA3E3",
+              "attachment_type": "default",
+              "actions": [
+                      {
+                        "name": "times_list",
+                        "text": "Pick a time...",
+                        "type": "select",
+                        "options": [
+                          {
+                            "text": times[0],
+                            "value": times[0]
+                          },
+                          {
+                            "text": times[1],
+                            "value": times[1]
+                          },
+                          {
+                            "text": times[2],
+                            "value": times[2]
+                          },
+                          {
+                            "text": times[3],
+                            "value": times[3]
+                          },
+                          {
+                            "text": times[4],
+                            "value": times[4]
+                          },
+                          {
+                            "text": times[5],
+                            "value": times[5]
+                          },
+                          {
+                            "text": times[6],
+                            "value": times[6]
+                          },
+                          {
+                            "text": times[7],
+                            "value": times[7]
+                          },
+                          {
+                            "text": times[8],
+                            "value": times[8]
+                          },
+                          {
+                            "text": times[9],
+                            "value": times[9]
+                          },
+                        ]
+                      }
+                  ]
+            }
+        ]
+      })
+  },
+
+  //Send Confirmation Emails to Each User to make sure they are registered
+
+  sendConfirmationEmails(ids) {
+    ids.forEach((id) => {
+      console.log(id)
+      User.findOne({slackId: id.id})
+      .then((user) => {
+        if (!user.gCal) {
+          let url = generateAuthUrl(id.id);
+          rtm.sendMessage(`Might want authorize Slack to access google calendars \n ${url}`, user.channel)
+        }
+      })
     })
+  }
 }
 
 
@@ -272,3 +297,5 @@ function formatTimeString(date) {
     , timeStr=[fixHour(h), pad(m)].join(':');
   return timeStr + ' ' + (h < 12 ? 'AM' : 'PM');
 }
+
+export default funcs
