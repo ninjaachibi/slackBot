@@ -9,16 +9,17 @@ const {User, Task} = models
 const oAuth2Client = new google.auth.OAuth2(
   process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
 
-let payloadHolder;
+
 
 export function generateAuthUrl(state) {
 
   const SCOPES = ['https://www.googleapis.com/auth/calendar'];
-  payloadHolder = state
+
 
   const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES,
+      state: state
     });
 
   return authUrl; //this needs to be sent to slack webhook
@@ -26,20 +27,31 @@ export function generateAuthUrl(state) {
 
 router.get('/google/callback' , (req,res) => {
   console.log(req.query);
-
+  let id;
+  if (typeof(req.query.state) !== 'string') {
+    id = req.query.state.user.id
+  } else {
+    id = req.query.state
+  }
   oAuth2Client.getToken(req.query.code, (err, token) => {
-    User.findOneAndUpdate({slackId: payloadHolder.user.id},
+    User.findOneAndUpdate({slackId: id},
       {$set:{gCalToken: token}},  {new: true},
       (err, success) => {
         console.log(success);
-        slackFinish(payloadHolder)
-        .then(() => {
-          if (payloadHolder.callback_id === 'reminder_confirm'){
-            res.send(`I've set a reminder but you should really remember things on your own`)
-          } else if(payloadHolder.callback_id === 'meeting_confirm'){
-            res.send(`The meeting is set, but it seems kinda pointless`)
-          }
-        })
+        if (typeof(req.query.state) !== 'string') {
+          slackFinish(req.query.state)
+          .then(() => {
+            if (req.query.state.callback_id === 'reminder_confirm'){
+              res.send(`I've set a reminder but you should really remember things on your own`)
+            } else if(req.query.state.callback_id === 'meeting_confirm'){
+              res.send(`The meeting is set, but it seems kinda pointless`)
+            } else {
+              res.send(`Uhm, You messed up`)
+            }
+          })
+        } else {
+          res.send(`You have been confirmed, thank you`)
+        }
       }
     )
     console.log('Token IS', token)

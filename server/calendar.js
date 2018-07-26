@@ -5,7 +5,7 @@ var router = express.Router();
 const {google} = require('googleapis');
 import models from './models/models.js'
 const { Meeting } = models
-var getNewTime = require('./slack.js');
+import funcs from './slack.js'
 
 export default function gCal(token, info, intent, cb) {
   const oAuth2Client = new google.auth.OAuth2(
@@ -44,12 +44,12 @@ export default function gCal(token, info, intent, cb) {
         cb(null, event)
       });
     } else if (intent === "meeting_confirm") {
-      console.log(getNewTime)
       let start = info.date;
       let end = addDuration(new Date(start), info.duration)
       //We can add the function that is being imported from Slack here to check the start and end.
       //checkTime(start, end) { ---- }
       console.log('END', end);
+      let slackIdList;
       axios.get('https://slack.com/api/users.list', {
         'headers': {
           'Authorization': 'Bearer ' + process.env.BOT_OAUTH_TOKEN
@@ -58,19 +58,27 @@ export default function gCal(token, info, intent, cb) {
         .then((userList) => {
           // userList = userList)
           // console.log('Inve', info.invitees);
+          let slackReplyIds = []
           let emailList = info.invitees.map((invite) => {
             let email;
             // console.log('USERAS', userList.data.members);
             userList.data.members.forEach((user) => {
               // console.log('dn', user.profile.display_name, 'user', invite);
+              console.log(user)
               if (user.profile.display_name === invite.stringValue) {
                 email = {'email': user.profile.email };
+                slackReplyIds.push({'id': user.id, name: user.profile.display_name})
               }
             })
             return email
           })
+          console.log(slackReplyIds)
+          funcs.sendConfirmationEmails(slackReplyIds)
+
       Promise.all(emailList.map(email => {
         console.log('email', email);
+
+
         return Meeting.find({invitees: email})
       }))
       .then(result => {

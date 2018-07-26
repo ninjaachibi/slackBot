@@ -21,6 +21,10 @@ let userSchema = new mongoose.Schema({
     type: Object,
     default: ""
   },
+  channel: {
+    type: String,
+    default: ""
+  }
 })
 //
 // let taskSchema = new mongoose.Schema({

@@ -63,7 +63,7 @@ app.post('/slack', (req, res) => {
         console.log('User is', user)
         console.log('Token is', !!user.gCalToken)
         if (!user.gCalToken) {
-          let url = generateAuthUrl(payload); //argument is slackId
+          let url = generateAuthUrl(payload); //argument is payload
           //send to slack
           res.send(`Might want authorize Slack to access google calendars \n ${url}`)
         }
