@@ -204,7 +204,7 @@ rtm.on('message', (message) => {
             if(!allAccess) {
               global.meetingInfo[message.user].noAccessUsers = noAccessUsers;
               //SEND ACCESS REQUESTS TO noAccessUsers
-              // sendConfirmationEmails(noAccessUsers);
+              sendConfirmationEmails(idList);
               web.chat.postMessage({
                   channel: replyChannel,
                   attachments: [
@@ -350,9 +350,10 @@ export default function getNewTime(channel, timeSlots) {
 
 function sendConfirmationEmails(ids) {
     ids.forEach((id) => {
-      console.log(id)
+      console.log('TESTSTST', id)
       User.findOne({slackId: id})
       .then((user) => {
+        console.log('USER', user);
         if (!user.gCal) {
           let url = generateAuthUrl(id);
           rtm.sendMessage(`I don't know why but someone wants to invite you to something, so you need authorize Slack to access google calendars \n ${url}`, user.channel)

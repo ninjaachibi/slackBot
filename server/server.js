@@ -23,9 +23,10 @@ cron.schedule('*/15 * * * * *', () => {
       console.log('info = ', meeting.info);
       console.log('deadline = ', meeting.deadline);
       if (meeting.deadline < new Date().getTime()){
-        if (action === '2hourCancel'){
+        if (meeting.action === '2hourCancel'){
+          console.log('MMMMMMMEEEEETTTTINg', meeting);
           Meeting.remove(meeting)
-          .then(()=>{ console.log('Meeting was removed');})
+          .then(()=>{ console.log('Meeting was removed************************************************************************');})
         } else {
 
         }
@@ -72,6 +73,7 @@ app.get('/ping', (req, res) => {
 let payload = ""
 app.post('/slack', (req, res) => {
   payload = JSON.parse(req.body.payload)
+  const userId = payload.user.id
   // console.log("PAYLOAD", payload.actions[0].selected_options[0].value)
   if (payload.actions[0].value === 'cancel' && payload.callback_id === 'reminder_confirm'){
     res.send(`I've cancelled your request, but if we're being honest, without that reminder, you're going to forget`)
@@ -79,9 +81,16 @@ app.post('/slack', (req, res) => {
     res.send(`I've cancelled the meeting but it could have been really important`)
   }else if (payload.actions[0].value === '2hourCancel' || payload.actions[0].value === '2hourCreate') {
     pending(payload)
-    res.send(`The meeting is now pending, I'll let you know what happens`)
+    User.findOne({slackId: userId})
+      .then( (user) => {
+        if (!user.gCalToken) {
+          let url = generateAuthUrl(userId); //argument is payload
+          res.send(`Might want authorize Slack to access google calendars \n ${url}`)
+        } else{
+          res.send(`The meeting is now pending, I'll let you know what happens`)
+        }
+      })
   }else {
-    const userId = payload.user.id
     // const info = global.reminderInfo[userId]
     User.findOne({slackId: userId})
       .then(async (user) => {
