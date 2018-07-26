@@ -6,10 +6,16 @@ import mongoose from 'mongoose';
 const slack = require('./slack')
 import models from './models/models.js'
 const { User } = models
+var cron = require('node-cron');
+
 
 // For revoking refresh tokens
 // import axios from 'axios';
 // axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
+
+cron.schedule('5 * * * *', () => {
+  console.log('CRON TEST');
+}, true)
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
