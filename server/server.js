@@ -5,7 +5,7 @@ import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
 const slack = require('./slack')
 import models from './models/models.js'
-const { User } = models
+const { User, Meeting } = models
 var cron = require('node-cron');
 
 
@@ -13,8 +13,20 @@ var cron = require('node-cron');
 // import axios from 'axios';
 // axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
 
-cron.schedule('5 * * * *', () => {
-  console.log('CRON TEST');
+cron.schedule('1 * * * *', () => {
+  console.log('CRON');
+  Meeting.find()
+  .then(meetings => {
+    meetings.forEach(meeting => {
+      console.log('action = ', meeting.action);
+      console.log('user = ', meeting.user);
+      console.log('info = ', meeting.info);
+      console.log('deadline = ', meeting.deadline);
+    })
+  })
+  .catch(err => {
+    console.log('Cron Error', err);
+  })
 }, true)
 
 if (!process.env.MONGODB_URI) {
@@ -55,6 +67,9 @@ app.post('/slack', (req, res) => {
     res.send(`I've cancelled your request, but if we're being honest, without that reminder, you're going to forget`)
   } else if (payload.actions[0].value === 'cancel' && payload.callback_id === 'meeting_confirm') {
     res.send(`I've cancelled the meeting but it could have been really important`)
+  }else if (payload.actions[0].value === '2hourCancel' || payload.actions[0].value === '2hourCreate') {
+    pending(payload)
+    res.send(`The meeting is now pending, I'll let you know what happens`)
   }else {
     const userId = payload.user.id
     // const info = global.reminderInfo[userId]
@@ -124,6 +139,27 @@ export default function slackFinish(payload) {
   }).catch(err => {
     console.log('slackFinishErr', err);
   })
+}
+
+
+function pending(payload){
+  let action = payload.actions[0].value;
+  let user = payload.user;
+  let info = global.meetingInfo[payload.user.id];
+  let deadline = new Date().getTime() + 7200000;
+  let newPendingMeeting = new Meeting({
+    info: JSON.stringify(info),
+    user: JSON.stringify(user),
+    action: action,
+    deadline: deadline
+  }).save()
+  .then(() =>{
+    console.log('Pending Meeting Saved');
+  })
+  .catch(err => {
+    console.log('Pending Error', err);
+  })
+
 }
 
 

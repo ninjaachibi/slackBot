@@ -187,71 +187,79 @@ rtm.on('message', (message) => {
             return User.find({slackId: id})
           }))
           .then(result => {
+            let allAccess = true;
+            let noAccessUsers = [];
             result.forEach(user => {
-              if (!user.gCalToken){
-                web.chat.postMessage({
-                    channel: replyChannel,
-                    attachments: [
-                        {
-                          "text": `So listen, not everyone you invited has given me acess to their google calendars. I'll try and get them to confirm but I'm lazy so I'll probably give up after like two hours. At that point, I can either just schedule the meeting without those people who haven't given me access, or I can just cancel it and let you deal with them in person`,
-                          "fallback": "FAIL",
-                          "callback_id": "meeting_confirm",
-                          "color": "#3AA3E3",
-                          "attachment_type": "default",
-                          "actions": [
-                            {
-                              "name": "2hourCancel",
-                              "text": "Cancel it",
-                              "type": "button",
-                              "value": "2hourCancel"
-                            },
-                            {
-                              "name": "2hourCreate",
-                              "text": "Create it without them",
-                              "type": "button",
-                              "value": "2hourCancel"
-                            },
-                            {
-                              "name": "response",
-                              "text": "Cancel the event completely",
-                              "type": "button",
-                              "value": "cancel"
-                            }
-                          ]
-                        }
-                    ]
-                  })
-              } else {
-                web.chat.postMessage({
-                    channel: replyChannel,
-                    attachments: [
-                        {
-                          "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
-                          "fallback": "You were unable to set up a meeting. Try again.",
-                          "callback_id": "meeting_confirm",
-                          "color": "#3AA3E3",
-                          "attachment_type": "default",
-                          "actions": [
-                            {
-                              "name": "response",
-                              "text": "Confirm",
-                              "type": "button",
-                              "value": "confirm"
-                            },
-                            {
-                              "name": "response",
-                              "text": "Cancel",
-                              "type": "button",
-                              "value": "cancel"
-                            }
-                          ]
-                        }
-                    ]
-                  })
+              if (!user[0].gCalToken){
+                noAccessUsers.push(user[0])
+                allAccess = false;
               }
             })
+            if(!allAccess) {
+              global.meetingInfo[message.user].noAccessUsers = noAccessUsers;
+              //SEND ACCESS REQUESTS TO noAccessUsers
+              web.chat.postMessage({
+                  channel: replyChannel,
+                  attachments: [
+                      {
+                        "text": `So listen, not everyone you invited has given me acess to their google calendars. I'll try and get them to confirm but I'm lazy so I'll probably give up after like two hours. At that point, I can either just schedule the meeting without those people who haven't given me access, or I can just cancel it and let you deal with them in person`,
+                        "fallback": "FAIL",
+                        "callback_id": "meeting_confirm",
+                        "color": "#3AA3E3",
+                        "attachment_type": "default",
+                        "actions": [
+                          {
+                            "name": "2hourCancel",
+                            "text": "Give up in two hours",
+                            "type": "button",
+                            "value": "2hourCancel"
+                          },
+                          {
+                            "name": "2hourCreate",
+                            "text": "Create it without them in two hours",
+                            "type": "button",
+                            "value": "2hourCreate"
+                          },
+                          {
+                            "name": "response",
+                            "text": "Don't even try",
+                            "type": "button",
+                            "value": "cancel"
+                          }
+                        ]
+                      }
+                  ]
+                })
+            } else {
+              web.chat.postMessage({
+                  channel: replyChannel,
+                  attachments: [
+                      {
+                        "text": `Would you like me to set a meeting with ${invitees} at ${time} on ${prettyDate}?`,
+                        "fallback": "You were unable to set up a meeting. Try again.",
+                        "callback_id": "meeting_confirm",
+                        "color": "#3AA3E3",
+                        "attachment_type": "default",
+                        "actions": [
+                          {
+                            "name": "response",
+                            "text": "Confirm",
+                            "type": "button",
+                            "value": "confirm"
+                          },
+                          {
+                            "name": "response",
+                            "text": "Cancel",
+                            "type": "button",
+                            "value": "cancel"
+                          }
+                        ]
+                      }
+                  ]
+                })
+            }
+          })
         })
-      })
         .catch(err => {
           console.log('Fetch Error', err);
         })
