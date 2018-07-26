@@ -5,11 +5,11 @@ import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
 const slack = require('./slack')
 import models from './models/models.js'
-const {User, Task} = models
+const { User } = models
 
-//For revoking refresh tokens
+// For revoking refresh tokens
 // import axios from 'axios';
-// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlsDBoy9RsVI0jAhAQtxcux1_zrCZ1r4v3utns0R2YwlUOkdhOZpmtIUb7kxq3BNzHZZxi4QB00nUuy-1R8tKw4S3-dCipI4mJde1nnsSSTBatsgotzLQD_7o6DG`)
+// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBsBbKV2YissPEIqYGT51HgTZi_MIgX4qmksG5zSmZRvIerK204f9hEGj1p0XaeaiwbAUA4ErMuQoAuDATAphQso1joWs4582bFsOZaWR4s_FKMr7Gn4j67oE9w`)
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
