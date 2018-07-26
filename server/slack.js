@@ -67,7 +67,7 @@ rtm.on('message', (message) => {
         return rtm.sendMessage(`I need a date to create a reminder on, otherwise you're going to ${title} on the wrong day and blame me`, replyChannel)
       }
       let prettyDate = new Date(date)
-      global.reminderInfo[message.user] = {task: title, time: prettyDate}
+      global.reminderInfo[message.user] = {task: title, time: prettyDate, channel: replyChannel}
       prettyDate = prettyDate.toDateString();
 
       // Response Call
@@ -141,7 +141,7 @@ rtm.on('message', (message) => {
         }
         invitees = guests;
       }
-      global.meetingInfo[message.user] = {date: actualDate, invitees: names}
+      global.meetingInfo[message.user] = {date: actualDate, invitees: names, channel: replyChannel}
       if (title){
         global.meetingInfo[message.user].title = title;
       } else {
@@ -197,6 +197,73 @@ rtm.on('message', (message) => {
   //   .catch(console.error);
   // console.log(`(channel:${message.channel}) ${message.user} says: ${message.text}`);
 })
+
+//export this function out to Calendar
+module.exports = function getNewTime(channel, timeSlots) {
+  let times = timeSlots
+  web.chat.postMessage({
+      channel: channel,
+      attachments: [
+          {
+            "text": `Do any of these other times work?`,
+            "fallback": "You were unable to set up a meeting. Try again.",
+            "callback_id": "meeting_confirm",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "actions": [
+                    {
+                      "name": "times_list",
+                      "text": "Pick a time...",
+                      "type": "select",
+                      "options": [
+                        {
+                          "text": times[0],
+                          "value": times[0]
+                        },
+                        {
+                          "text": times[1],
+                          "value": times[1]
+                        },
+                        {
+                          "text": times[2],
+                          "value": times[2]
+                        },
+                        {
+                          "text": times[3],
+                          "value": times[3]
+                        },
+                        {
+                          "text": times[4],
+                          "value": times[4]
+                        },
+                        {
+                          "text": times[5],
+                          "value": times[5]
+                        },
+                        {
+                          "text": times[6],
+                          "value": times[6]
+                        },
+                        {
+                          "text": times[7],
+                          "value": times[7]
+                        },
+                        {
+                          "text": times[8],
+                          "value": times[8]
+                        },
+                        {
+                          "text": times[9],
+                          "value": times[9]
+                        },
+                      ]
+                    }
+                ]
+          }
+      ]
+    })
+}
+
 
 function formatTimeString(date) {
   function pad(s) { return ((''+s).length < 2 ? '0' : '') + s; }
