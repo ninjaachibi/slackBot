@@ -91,7 +91,7 @@ export default function gCal(token, info, intent, cb) {
           }
         })
         console.log('THE EVENT IS FREE', free);
-        
+
       })
       event = {
         'summary': info.title,

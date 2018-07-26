@@ -46,65 +46,44 @@ let userSchema = new mongoose.Schema({
 // })
 
 let meetingSchema = new mongoose.Schema({
-  startTime: {
+  info: {
     type: String,
     required: true,
   },
-  endTime: {
+  user: {
     type: String,
     required: true,
   },
-  invitees: {
-    type: Array,
+  action: {
+    type: String,
     required: true,
   },
-  // subject: {
-  //   type: String,
-  // },
-  // location: {
-  //   type: String,
-  // },
-  // //This can be the default based on the user requesting, or if specified make it the specified time.
-  // meetingLength: {
-  //   type: Number,
-  //   default: 30
-  // },
-  // gCalFields: {
-  //   type: String,
-  // },
-  // status: {
-  //   type: String,
-  // },
-  // createdAt: {
-  //   type: Date,
-  //   default: new Date(),
-  // },
-  // requesterId: {
-  //   type: String,
-  //   required: true
-  // }
+  deadline: {
+    type: Number,
+    required: true,
+  },
 })
-
-let inviteeSchema = new mongoose.Schema({
-  eventId: {
-    type: String,
-  },
-  inviteeId: {
-    type: String,
-  },
-  requesterId: {
-    type: String,
-  },
-  status: {
-    type: String,
-  }
-})
+//
+// let inviteeSchema = new mongoose.Schema({
+//   eventId: {
+//     type: String,
+//   },
+//   inviteeId: {
+//     type: String,
+//   },
+//   requesterId: {
+//     type: String,
+//   },
+//   status: {
+//     type: String,
+//   }
+// })
 
 
 
 let User = mongoose.model('User', userSchema)
 // let Task = mongoose.model('Task', taskSchema)
 let Meeting = mongoose.model('Meeting', meetingSchema)
-let Invitee = mongoose.model('Invitee', inviteeSchema)
+// let Invitee = mongoose.model('Invitee', inviteeSchema)
 
-export default {User: User,  Meeting: Meeting, Invitee: Invitee}
+export default {User: User,  Meeting: Meeting}
