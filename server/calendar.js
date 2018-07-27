@@ -4,15 +4,16 @@ const app = express();
 var router = express.Router();
 const {google} = require('googleapis');
 import models from './models/models.js'
-const { Meeting } = models
+const { User, Meeting } = models
 import getNewTime from './slack.js'
 
 export default function gCal(token, info, intent, cb) {
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
-
     oAuth2Client.setCredentials(token);
     console.log('in calendar: token is ', token);
+    // console.log('**************oAuth2Client IS *********************',oAuth2Client);
+
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
     let event;
 
@@ -55,10 +56,10 @@ export default function gCal(token, info, intent, cb) {
           'Authorization': 'Bearer ' + process.env.BOT_OAUTH_TOKEN
         }
       })
-        .then((userList) => {
+        .then(async(userList) => {
           // userList = userList)
           // console.log('Inve', info.invitees);
-          let slackReplyIds = []
+          let gCalIds = []
           let emailList = info.invitees.map((invite) => {
             let email;
             // console.log('USERAS', userList.data.members);
@@ -67,18 +68,47 @@ export default function gCal(token, info, intent, cb) {
               // console.log(user)
               if (user.profile.display_name === invite.stringValue) {
                 email = {'email': user.profile.email };
-                // slackReplyIds.push({'id': user.id, name: user.profile.display_name})
+                gCalIds.push({'id': user.id, name: user.profile.display_name})
               }
             })
             return email
           })
+          //push tokens for invitees into gCalTokens array
+          let gCalTokens = [];
+          gCalTokens = await Promise.all(
+            gCalIds.map((id) => {
+              return User.findOne({slackId: id.id})
+              .then((user) => {
+                console.log("Does This Finish?")
+                return user.gCalToken;
+              })
+            })
+          )
+          gCalTokens.push(token) //include self in tokens
+
+          console.log("Here first or?")
+          console.log('gCalTokens array', gCalTokens);
+          //look through people's busy times
+          let allBusyTimes = []
+
+          //add busy times for invitees and self
+          gCalTokens.forEach(async(tempToken) => {
+            try {
+              console.log('inside forEach');
+              let busyTimes = await getBusyTimes(tempToken, start);
+              allBusyTimes.push(...busyTimes);
+              console.log('allBusyTimes', allBusyTimes);
+            }
+            catch (err ) {
+              console.log('ERROR', err);
+            }
+          })
+
           // console.log(slackReplyIds)
           // funcs.sendConfirmationEmails(slackReplyIds)
 
       Promise.all(emailList.map(email => {
-        // console.log('email', email);
-
-
+        console.log('email', email);
         return Meeting.find({invitees: email})
       }))
       // .then(result => {
@@ -167,4 +197,39 @@ export default function gCal(token, info, intent, cb) {
     let endOverlap = s <= eT && eT <= e;
     let overlap = startOverlap || endOverlap;
     return overlap
+  }
+
+  function getBusyTimes(tempToken, start) {
+    let tempBusyTimes = [];
+
+    const tempOAuth = new google.auth.OAuth2(
+      process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
+      tempOAuth.setCredentials(tempToken);
+      console.log('@@@@@@@@@@@@@@@@@@tempOAuth', tempOAuth);
+      const tempCalendar = google.calendar({version: 'v3', auth: tempOAuth});
+
+      console.log('start', new Date(start).toISOString());
+      let searchEnd = new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000
+      console.log('end', new Date(searchEnd).toISOString());
+
+      return new Promise((resolve, reject) => {
+        tempCalendar.freebusy.query({
+          "resource": {
+            "timeMin": new Date(start).toISOString(),
+            "timeMax": new Date(searchEnd).toISOString(),
+            "items": [
+              {
+                "id": "primary"
+              }
+            ]
+          }
+        }, (err, res) => {
+          if(err) reject(err)
+          res.data.calendars.primary.busy.forEach((event) => {
+            tempBusyTimes.push(event);
+          })
+          console.log('tempBusyTimes', tempBusyTimes);
+          resolve(tempBusyTimes);
+        })
+      })
   }

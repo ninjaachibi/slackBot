@@ -4,16 +4,14 @@ import gCal, {refreshToken} from './calendar';
 import calendarAuthRoutes, {generateAuthUrl} from './calendar-auth';
 import mongoose from 'mongoose';
 const slack = require('./slack')
-const { RTMClient } = require('@slack/client');
+const {rtm} = require('./slack')
+
 
 import models from './models/models.js'
 const { User, Meeting } = models
 var cron = require('node-cron');
 
 const token = process.env.BOT_OAUTH_TOKEN;
-
-const rtm = new RTMClient(token);
-rtm.start();
 
 // For revoking refresh tokens
 // import axios from 'axios';
@@ -190,7 +188,7 @@ app.post('/slack', (req, res) => {
           //send to slack
           res.send(`Might want authorize Slack to access google calendars \n ${url}`)
         }
-        else if(user.gCalToken.expiry_date < Date.now() + 60000) {
+        else if(user.gCalToken.expiry_date < Date.now() - 60000) {
           console.log('**************************refreshing token***********************');
           //refresh token
           console.log('token is',user.gCalToken);
