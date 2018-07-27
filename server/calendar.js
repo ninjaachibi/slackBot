@@ -5,7 +5,9 @@ var router = express.Router();
 const {google} = require('googleapis');
 import models from './models/models.js'
 const { User, Meeting } = models
-import getNewTime from './slack.js'
+const { getNewTime } = require('./slack.js')
+
+global.emailList = [];
 
 export default function gCal(token, info, intent, cb) {
   const oAuth2Client = new google.auth.OAuth2(
@@ -60,7 +62,7 @@ export default function gCal(token, info, intent, cb) {
           // userList = userList)
           // console.log('Inve', info.invitees);
           let gCalIds = []
-          let emailList = info.invitees.map((invite) => {
+          global.emailList = info.invitees.map((invite) => {
             let email;
             // console.log('USERAS', userList.data.members);
             userList.data.members.forEach((user) => {
@@ -73,6 +75,7 @@ export default function gCal(token, info, intent, cb) {
             })
             return email
           })
+          console.log('EMAILS', emailList);
           //push tokens for invitees into gCalTokens array
           let gCalTokens = [];
           gCalTokens = await Promise.all(
@@ -89,28 +92,94 @@ export default function gCal(token, info, intent, cb) {
           console.log("Here first or?")
           console.log('gCalTokens array', gCalTokens);
           //look through people's busy times
-          let allBusyTimes = []
+          // let allBusyTimes = []
 
           //add busy times for invitees and self
-          gCalTokens.forEach(async(tempToken) => {
+          return Promise.all(gCalTokens.map(async(tempToken) => {
             try {
               console.log('inside forEach');
               let busyTimes = await getBusyTimes(tempToken, start);
-              allBusyTimes.push(...busyTimes);
-              console.log('allBusyTimes', allBusyTimes);
+              return busyTimes
+              // allBusyTimes.push(...busyTimes);
+              // console.log('allBusyTimes', allBusyTimes);
             }
             catch (err ) {
               console.log('ERROR', err);
             }
+          }))
+        }).then(res => {
+          console.log('Test',res)
+          console.log(Array.isArray(res));
+          let allBusyTimes = [].concat.apply([], res);
+          //HERE TO CATCH
+          let free = true;
+          console.log('ALLBUSY', allBusyTimes);
+          //check if original time is free
+          allBusyTimes.forEach(event => {
+            if (overlap(event.start, event.start, start, end)){
+              console.log('free ran');
+              free = false
+            }
           })
+          console.log("Free ? ", free);
+          if (!free){
+            let suggestions = [];
+            //Push free times onto Array
+            let current = new Date(start);
+            let origEnd = current.getTime() + 604800000;
+            while(suggestions.length < 10 && current.getTime() < origEnd){
+              let dayCurr = current;
+              let daySugg = [];
+              let dayEnd = dayCurr.getTime() + 86400000
+              while(daySugg.length < 3 && dayCurr.getTime() < dayEnd){
+                let dayCurrEnd = addDuration(dayCurr, info.duration)
+                if (!conflict(dayCurr, dayCurrEnd, allBusyTimes)) {
+                  daySugg.push(dayCurr)
+                }
+                dayCurr = new Date(dayCurrEnd);
+              }
+              suggestions = suggestions.concat(daySugg);
+              console.log(dayEnd);
+              current = new Date(dayEnd);
+              console.log('suggestions', suggestions);
+            }
+            getNewTime(info.channel, suggestions, info)
+            // console.log('START', start);
+            //
+            // end = addDuration(new Date(start), info.duration)
+          } else {
+              event = {
+                'summary': info.title,
+                'start': {
+                  'dateTime': start,
+                },
+                'end': {
+                  'dateTime': end
+                },
+                // 'location': info.location,
+                'attendees': global.emailList
+              }
+              calendar.events.insert({
+                calendarId: 'primary',
+                resource: event,
+              }, function(err, event) {
+                if (err) {
+                  console.log('There was an error contacting the Calendar service: ' + err);
+                  return cb(err);
+                }
+                console.log('Event created:');
+                cb(null, event)
+              });
+          }
+
 
           // console.log(slackReplyIds)
           // funcs.sendConfirmationEmails(slackReplyIds)
 
-      Promise.all(emailList.map(email => {
-        console.log('email', email);
-        return Meeting.find({invitees: email})
-      }))
+      // Promise.all(emailList.map(email => {
+      //   console.log('email', email);
+      //   return Meeting.find({invitees: email})
+      // }))
       // .then(result => {
       //   let free = true;
       //   // console.log('result', result);
@@ -123,32 +192,9 @@ export default function gCal(token, info, intent, cb) {
       //   console.log('THE EVENT IS FREE', free);
 
       // })
-      event = {
-        'summary': info.title,
-        'start': {
-          'dateTime': start,
-        },
-        'end': {
-          'dateTime': end
-        },
-        // 'location': info.location,
-        'attendees': emailList
-      }
-      calendar.events.insert({
-        calendarId: 'primary',
-        resource: event,
-      }, function(err, event) {
-        if (err) {
-          console.log('There was an error contacting the Calendar service: ' + err);
-          return cb(err);
-        }
-        console.log('Event created:');
-        cb(null, event)
-      });
-
     })
-    }
 
+    }
 
   }
 
@@ -197,6 +243,17 @@ export default function gCal(token, info, intent, cb) {
     let endOverlap = s <= eT && eT <= e;
     let overlap = startOverlap || endOverlap;
     return overlap
+  }
+
+  function conflict(start, end, busyTimes){
+    let ret = false;
+    busyTimes.forEach(time =>{
+      if(overlap(start, end, time.start, time.end)){
+        let ret = true;
+        console.log('COnflict at', start, end, time.start, time.end);
+      }
+    })
+    return ret;
   }
 
   function getBusyTimes(tempToken, start) {
