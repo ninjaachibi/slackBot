@@ -12,14 +12,14 @@ const oAuth2Client = new google.auth.OAuth2(
 
 
 export function generateAuthUrl(state) {
-
+  console.log('state is', state);
   const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 
   const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES,
-      state: state
+      state: JSON.stringify(state)
     });
 
   return authUrl; //this needs to be sent to slack webhook
@@ -27,23 +27,25 @@ export function generateAuthUrl(state) {
 
 router.get('/google/callback' , (req,res) => {
   console.log(req.query);
+  let parsedState= JSON.parse(req.query.state)
   let id;
-  if (typeof(req.query.state) !== 'string') {
-    id = req.query.state.user.id
+  if (typeof(parsedState) !== 'string') {
+    console.log('in callback, state is', parsedState);
+    id = parsedState.user.id
   } else {
-    id = req.query.state
+    id = parsedState
   }
   oAuth2Client.getToken(req.query.code, (err, token) => {
     User.findOneAndUpdate({slackId: id},
       {$set:{gCalToken: token}},  {new: true},
       (err, success) => {
-        console.log(success);
-        if (typeof(req.query.state) !== 'string') {
-          slackFinish(req.query.state)
+        // console.log(success);
+        if (typeof(parsedState) !== 'string') {
+          slackFinish(parsedState)
           .then(() => {
-            if (req.query.state.callback_id === 'reminder_confirm'){
+            if (parsedState.callback_id === 'reminder_confirm'){
               res.send(`I've set a reminder but you should really remember things on your own`)
-            } else if(req.query.state.callback_id === 'meeting_confirm'){
+            } else if(parsedState.callback_id === 'meeting_confirm'){
               res.send(`The meeting is set, but it seems kinda pointless`)
             } else {
               res.send(`Uhm, You messed up`)
@@ -57,7 +59,7 @@ router.get('/google/callback' , (req,res) => {
     console.log('Token IS', token)
     if(err) console.log('bad code');
 
-    //save to DB req.query.state
+    //save to DB parsedState
     //call gcal();
     // res.send("Received code")
   })

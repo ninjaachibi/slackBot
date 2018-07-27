@@ -12,7 +12,7 @@ export default function gCal(token, info, intent, cb) {
     process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
     oAuth2Client.setCredentials(token);
     console.log('in calendar: token is ', token);
-    console.log('**************oAuth2Client IS *********************',oAuth2Client);
+    // console.log('**************oAuth2Client IS *********************',oAuth2Client);
 
     const calendar = google.calendar({version: 'v3', auth: oAuth2Client})
     let event;
@@ -65,7 +65,7 @@ export default function gCal(token, info, intent, cb) {
             // console.log('USERAS', userList.data.members);
             userList.data.members.forEach((user) => {
               // console.log('dn', user.profile.display_name, 'user', invite);
-              console.log(user)
+              // console.log(user)
               if (user.profile.display_name === invite.stringValue) {
                 email = {'email': user.profile.email };
                 gCalIds.push({'id': user.id, name: user.profile.display_name})
@@ -76,7 +76,8 @@ export default function gCal(token, info, intent, cb) {
           //push tokens for invitees into gCalTokens array
           let gCalTokens = [];
           gCalIds.forEach((id) => {
-            User.findOne({slackId: id})
+            console.log('ID IS', id);
+            User.findOne({slackId: id.id})
               .then((user) => {
                 gCalTokens.push(user.gCalToken);
               })
@@ -86,6 +87,7 @@ export default function gCal(token, info, intent, cb) {
             const tempOAuth = new google.auth.OAuth2(
               process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
             tempOAuth.setCredentials(tempToken);
+            console.log('@@@@@@@@@@@@@@@@@@tempOAuth', tempOAuth);
             const tempCalendar = google.calendar({version: 'v3', auth: tempOAuth});
 
             let searchEnd = new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000
@@ -144,17 +146,17 @@ export default function gCal(token, info, intent, cb) {
           return cb(err);
         }
         console.log('Event created:');
-        let meet = new Meeting({
-          startTime: start,
-          endTime: end,
-          invitees: emailList
-        }).save()
-        .then(()=>{
-          cb(null, event)
-        })
-        .catch(err => {
-          console.log('Error', err);
-        })
+        // let meet = new Meeting({
+        //   startTime: start,
+        //   endTime: end,
+        //   invitees: emailList
+        // }).save()
+        // .then(()=>{
+        //   cb(null, event)
+        // })
+        // .catch(err => {
+        //   console.log('Error', err);
+        // })
 
       });
 

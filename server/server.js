@@ -11,34 +11,34 @@ var cron = require('node-cron');
 
 // For revoking refresh tokens
 // import axios from 'axios';
-// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
+// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBleFAOvNIWcuKV7YAnPotpiHmnHWJDFg1DNVA6ESroVdUQ6D0f0XWBNZChkzoywbmmgu7X14JhacjTTE-yOj34QDRnq-YX2brehW3_vBlw0hKQJ6xLhdRSmEyw`)
 
-cron.schedule('*/15 * * * * *', () => {
-  console.log('CRON');
-  Meeting.find()
-  .then(meetings => {
-    meetings.forEach(meeting => {
-      // console.log('action = ', meeting.action);
-      // console.log('user = ', meeting.user);
-      // console.log('info = ', meeting.info);
-      // console.log('deadline = ', meeting.deadline);
-      if (meeting.deadline < new Date().getTime()){
-        if (meeting.action === '2hourCancel'){
-          // console.log('MMMMMMMEEEEETTTTINg', meeting);
-          Meeting.remove(meeting)
-          .then(()=>{ console.log('Meeting was removed************************************************************************');})
-        } else {
-
-        }
-      } else {
-
-      }
-    })
-  })
-  .catch(err => {
-    console.log('Cron Error', err);
-  })
-})
+// cron.schedule('*/15 * * * * *', () => {
+//   console.log('CRON');
+//   Meeting.find()
+//   .then(meetings => {
+//     meetings.forEach(meeting => {
+//       // console.log('action = ', meeting.action);
+//       // console.log('user = ', meeting.user);
+//       // console.log('info = ', meeting.info);
+//       // console.log('deadline = ', meeting.deadline);
+//       if (meeting.deadline < new Date().getTime()){
+//         if (meeting.action === '2hourCancel'){
+//           // console.log('MMMMMMMEEEEETTTTINg', meeting);
+//           Meeting.remove(meeting)
+//           .then(()=>{ console.log('Meeting was removed************************************************************************');})
+//         } else {
+//
+//         }
+//       } else {
+//
+//       }
+//     })
+//   })
+//   .catch(err => {
+//     console.log('Cron Error', err);
+//   })
+// })
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
