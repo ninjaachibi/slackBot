@@ -219,7 +219,12 @@ app.post('/slack', (req, res) => {
               duration: info.info.duration
             }
             slackFinish(newPayload)
-            // console.log('time', payload.actions[0].selected_options[0].text);
+            .then(()=> {
+              res.send('The new meeting time works for everyone congrats')
+            })
+            .catch(err => {
+              console.log('ERROR', err);
+            })
           }else{
             slackFinish(payload)
             .then(() => {

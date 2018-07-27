@@ -290,7 +290,7 @@ function getNewTime(channel, times, info) {
         channel: channel,
         attachments: [
             {
-              "text": `Do any of these other times work?`,
+              "text": `There seems to be a conflict with one of the people you invited \n Do any of these other times work?`,
               "fallback": "You were unable to set up a meeting. Try again.",
               "callback_id": "meeting_confirm",
               "color": "#3AA3E3",
