@@ -137,6 +137,7 @@ export default function gCal(token, info, intent, cb) {
                   daySugg.push(dayCurr)
                 }
                 dayCurr = new Date(dayCurrEnd);
+
               }
               suggestions = suggestions.concat(daySugg);
               console.log(dayEnd);
@@ -249,7 +250,7 @@ export default function gCal(token, info, intent, cb) {
     let ret = false;
     busyTimes.forEach(time =>{
       if(overlap(start, end, time.start, time.end)){
-        let ret = true;
+        ret = true;
         console.log('COnflict at', start, end, time.start, time.end);
       }
     })
