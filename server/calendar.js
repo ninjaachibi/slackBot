@@ -84,33 +84,23 @@ export default function gCal(token, info, intent, cb) {
               })
             })
           )
-
-          // gCalIds.forEach(async (id) => {
-          //   console.log("here or..?")
-          //   console.log('ID IS', id);
-          //   await User.findOne({slackId: id.id})
-          //     .then((user) => {
-          //       console.log("here")
-          //       console.log('found User',user);
-          //       gCalTokens.push(user.gCalToken);
-          //     })
-          // })
+          gCalTokens.push(token) //include self in tokens
 
           console.log("Here first or?")
           console.log('gCalTokens array', gCalTokens);
           //look through people's busy times
           let allBusyTimes = []
 
-          //add busy times for invitees
+          //add busy times for invitees and self
           gCalTokens.forEach(async(tempToken) => {
             try {
               console.log('inside forEach');
-              let busyTimes = await getBusyTimes(tempToken);
+              let busyTimes = await getBusyTimes(tempToken, start);
               allBusyTimes.push(...busyTimes);
               console.log('allBusyTimes', allBusyTimes);
             }
             catch (err ) {
-              console.log(err);
+              console.log('ERROR', err);
             }
           })
 
@@ -207,4 +197,39 @@ export default function gCal(token, info, intent, cb) {
     let endOverlap = s <= eT && eT <= e;
     let overlap = startOverlap || endOverlap;
     return overlap
+  }
+
+  function getBusyTimes(tempToken, start) {
+    let tempBusyTimes = [];
+
+    const tempOAuth = new google.auth.OAuth2(
+      process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
+      tempOAuth.setCredentials(tempToken);
+      console.log('@@@@@@@@@@@@@@@@@@tempOAuth', tempOAuth);
+      const tempCalendar = google.calendar({version: 'v3', auth: tempOAuth});
+
+      console.log('start', new Date(start).toISOString());
+      let searchEnd = new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000
+      console.log('end', new Date(searchEnd).toISOString());
+
+      return new Promise((resolve, reject) => {
+        tempCalendar.freebusy.query({
+          "resource": {
+            "timeMin": new Date(start).toISOString(),
+            "timeMax": new Date(searchEnd).toISOString(),
+            "items": [
+              {
+                "id": "primary"
+              }
+            ]
+          }
+        }, (err, res) => {
+          if(err) reject(err)
+          res.data.calendars.primary.busy.forEach((event) => {
+            tempBusyTimes.push(event);
+          })
+          console.log('tempBusyTimes', tempBusyTimes);
+          resolve(tempBusyTimes);
+        })
+      })
   }
