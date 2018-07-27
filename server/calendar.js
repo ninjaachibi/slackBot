@@ -81,18 +81,18 @@ export default function gCal(token, info, intent, cb) {
 
         return Meeting.find({invitees: email})
       }))
-      .then(result => {
-        let free = true;
-        // console.log('result', result);
-        result[0].forEach(event => {
-          // console.log('Event', event.startTime);
-          if (overlap(event.startTime, event.endTime, start, end)){
-            free = false
-          }
-        })
-        console.log('THE EVENT IS FREE', free);
+      // .then(result => {
+      //   let free = true;
+      //   // console.log('result', result);
+      //   result[0].forEach(event => {
+      //     // console.log('Event', event.startTime);
+      //     if (overlap(event.startTime, event.endTime, start, end)){
+      //       free = false
+      //     }
+      //   })
+      //   console.log('THE EVENT IS FREE', free);
 
-      })
+      // })
       event = {
         'summary': info.title,
         'start': {
