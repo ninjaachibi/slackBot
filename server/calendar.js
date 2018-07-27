@@ -48,8 +48,8 @@ export default function gCal(token, info, intent, cb) {
       let start = info.date;
       let end = addDuration(new Date(start), info.duration)
       //We can add the function that is being imported from Slack here to check the start and end.
+      // console.log('END', end);
       //checkTime(start, end) { ---- }
-      console.log('END', end);
       // let slackIdList;
       axios.get('https://slack.com/api/users.list', {
         'headers': {
@@ -146,18 +146,7 @@ export default function gCal(token, info, intent, cb) {
           return cb(err);
         }
         console.log('Event created:');
-        // let meet = new Meeting({
-        //   startTime: start,
-        //   endTime: end,
-        //   invitees: emailList
-        // }).save()
-        // .then(()=>{
-        //   cb(null, event)
-        // })
-        // .catch(err => {
-        //   console.log('Error', err);
-        // })
-
+        cb(null, event)
       });
 
     })
