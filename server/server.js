@@ -15,92 +15,117 @@ const token = process.env.BOT_OAUTH_TOKEN;
 
 // For revoking refresh tokens
 // import axios from 'axios';
-// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlsFBsJvlx1ZmhK-aG1Avubfkgep-3Dj9YkuyRBg4rixmGHLf7WHpuGeFfKlzCjLFm5R_A5h39b3GbZnofT0c8TbZ1Yff_rIcUrrW-gyJPL2ROln3QEhL5hFl7rY`)
+// axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
 
-// cron.schedule('*/15 * * * * *', () => {
-//   console.log('CRON');
-//   Meeting.find()
-//   .then(meetings => {
-//     console.log('meetings is', meetings);
-//     if (meetings.length === 0 || meetings === undefined){
-//       console.log('No Pending Meetings');
-//       return;
-//     }
-//     meetings.forEach(meeting => {
-//       // console.log('Meeting', meeting);
-//       let userId = JSON.parse(meeting.user).id
-//       if (meeting.deadline < new Date().getTime()){
-//         if (meeting.action === '2hourCancel'){
-//           // console.log('Cancel');
-//           Meeting.deleteOne({_id: meeting.id})
-//           .then(()=>{
-//             User.findOne({slackId: userId})
-//             .then((creator) => {
-//               console.log(creator);
-//               rtm.sendMessage(`A pending event was deleted from the database`, creator.channel)})
-//           })
-//         } else {
-//           //Make the event without the people in meeting.ingo.noAccessUsers
-//           console.log("MAKE MEETING MINUS BAD PEOPLE");
-//           // let token = user.gCalToken;
-//           // let info = JSON.parse(meeting.info)
-//           // gCal(token, info, "meeting_confirm", (err, succ) => {
-//           //   if (err) {
-//           //     console.log('ERROR', err);
-//           //     reject(err);
-//           //   } else {
-//           //     console.log('SUCCESS', succ.data.htmlLink)
-//           //     resolve(true)
-//           //   }
-//           // })
-//         }
-//       } else {
-//         let noAccess = JSON.parse(meeting.info).noAccessUsers;
-//         noAccess = noAccess.map(obj => (obj.slackId));
-//         Promise.all(noAccess.map(slackId => {
-//           return User.findOne({slackId: slackId})
-//         }))
-//         .then((result) => {
-//           let allGood = true;
-//           let stillWrong = [];
-//           result.forEach(res => {
-//             if (!res.gCalToken){
-//               allGood = false;
-//               stillWrong.push(res);
-//             }
-//           })
-//           if (allGood){
-//             //Make the event as normal
-//
-//             User.findOne({slackId: userId})
-//             .then((creator) => {
-//               let token = creator.gCalToken;
-//               let info = JSON.parse(meeting.info)
-//               gCal(token, info, "meeting_confirm", (err, succ) => {
-//                 if (err) {
-//                   console.log('ERROR', err);
-//                   // reject(err);
-//                 } else {
-//                   console.log('SUCCESS', succ.data.htmlLink)
-//                   // resolve(true)
-//                 }
-//               })
-//             })
-//
-//           } else {
-//             let updatedMeeting = JSON.parse(meeting.info)
-//             updatedMeeting.noAccessUsers = stillWrong
-//             Meeting.findOneAndUpdate({_id: meeting.id}, {info: JSON.stringify(updatedMeeting)})
-//             .then(()=> {console.log('MEETING HAS BEEN UPDated');})
-//           }
-//         })
-//       }
-//     })
-//   })
-//   .catch(err => {
-//     console.log('Cron Error', err);
-//   })
-// })
+cron.schedule('*/15 * * * * *', () => {
+  console.log('CRON');
+  Meeting.find()
+  .then(meetings => {
+    if (meetings.length === 0 ){
+      console.log('No Pending Meetings');
+      return;
+    }
+    meetings.forEach(meeting => {
+      console.log('Meeting', meeting);
+      let userId = JSON.parse(meeting.user).id
+      if (meeting.deadline < new Date().getTime()){
+        if (meeting.action === '2hourCancel'){
+          // console.log('Cancel');
+          Meeting.deleteOne({_id: meeting.id})
+          .then(()=>{
+            User.findOne({slackId: userId})
+            .then((creator) => {
+              console.log(creator);
+              rtm.sendMessage(`A pending event was deleted from the database`, creator.channel)})
+          })
+        } else {
+          //Make the event without the people in meeting.info.noAccessUsers
+          User.findOne({slackId: userId})
+          .then((creator) => {
+            let token = creator.gCalToken;
+            let info = JSON.parse(meeting.info)
+            let noAccess = JSON.parse(meeting.info).noAccessUsers;
+            noAccess = noAccess.map(obj => (obj.slackId));
+            Promise.all(noAccess.map(slackId => {
+              return User.findOne({slackId: slackId})
+            }))
+            .then((result) => {
+              let names = result.map(user => (user.displayName))
+              info.invitees = info.invitees.filter((invitee) => {
+                return names.indexOf(invitee.stringValue) !== -1
+              })
+              gCal(token, info, "meeting_confirm", (err, succ) => {
+                if (err) {
+                  console.log('ERROR', err);
+                } else {
+                  console.log('SUCCESS', succ.data.htmlLink)
+                  console.log('Meeting created without no access users');
+                  Meeting.deleteOne({_id: meeting.id})
+                  .then(()=>{
+                    User.findOne({slackId: userId})
+                    .then((creator) => {
+                      console.log(creator);
+                      rtm.sendMessage(`A pending event was created without those who did not allow me access to their calendar`, creator.channel)})
+                    })
+                }
+              })
+            })
+          })
+          .catch(err => {
+            console.log('Create without-error', err);
+          })
+        }
+      } else {
+        let noAccess = JSON.parse(meeting.info).noAccessUsers;
+        noAccess = noAccess.map(obj => (obj.slackId));
+        Promise.all(noAccess.map(slackId => {
+          return User.findOne({slackId: slackId})
+        }))
+        .then((result) => {
+          let allGood = true;
+          let stillWrong = [];
+          result.forEach(res => {
+            if (!res.gCalToken){
+              allGood = false;
+              stillWrong.push(res);
+            }
+          })
+          if (allGood){
+            //Make the event as normal
+            User.findOne({slackId: userId})
+            .then((creator) => {
+              let token = creator.gCalToken;
+              let info = JSON.parse(meeting.info)
+              gCal(token, info, "meeting_confirm", (err, succ) => {
+                if (err) {
+                  console.log('ERROR', err);
+                } else {
+                  console.log('SUCCESS', succ.data.htmlLink)
+                  Meeting.deleteOne({_id: meeting.id})
+                  .then(()=>{
+                    User.findOne({slackId: userId})
+                    .then((creator) => {
+                      console.log(creator);
+                      rtm.sendMessage(`A pending event was created with all invitees`, creator.channel)})
+                    })
+                  }
+              })
+            })
+
+          } else {
+            let updatedMeeting = JSON.parse(meeting.info)
+            updatedMeeting.noAccessUsers = stillWrong
+            Meeting.findOneAndUpdate({_id: meeting.id}, {info: JSON.stringify(updatedMeeting)})
+            .then(()=> {console.log('MEETING HAS BEEN UPDated');})
+          }
+        })
+      }
+    })
+  })
+  .catch(err => {
+    console.log('Cron Error', err);
+  })
+})
 
 if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is not in the environmental variables")
