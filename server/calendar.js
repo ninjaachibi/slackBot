@@ -56,7 +56,7 @@ export default function gCal(token, info, intent, cb) {
           'Authorization': 'Bearer ' + process.env.BOT_OAUTH_TOKEN
         }
       })
-        .then((userList) => {
+        .then(async(userList) => {
           // userList = userList)
           // console.log('Inve', info.invitees);
           let gCalIds = []
@@ -75,36 +75,43 @@ export default function gCal(token, info, intent, cb) {
           })
           //push tokens for invitees into gCalTokens array
           let gCalTokens = [];
-          gCalIds.forEach((id) => {
-            console.log('ID IS', id);
-            User.findOne({slackId: id.id})
+          gCalTokens = await Promise.all(
+            gCalIds.map((id) => {
+              return User.findOne({slackId: id.id})
               .then((user) => {
-                gCalTokens.push(user.gCalToken);
+                console.log("Does This Finish?")
+                return user.gCalToken;
               })
-          })
-          //look through people's busy times
-          gCalTokens.forEach((tempToken) => {
-            const tempOAuth = new google.auth.OAuth2(
-              process.env.GCAL_CLIENT_ID, process.env.GCAL_CLIENT_SECRET, process.env.NGROK + '/google/callback');
-            tempOAuth.setCredentials(tempToken);
-            console.log('@@@@@@@@@@@@@@@@@@tempOAuth', tempOAuth);
-            const tempCalendar = google.calendar({version: 'v3', auth: tempOAuth});
-
-            let searchEnd = new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000
-            tempCalendar.freebusy.query({
-              "timeMin": start,
-              "timeMax": new Date(searchEnd).toISOString(),
-              "items": [
-                {
-                  "id": "primary"
-                }
-              ]
             })
-              .then(resp => {
-                console.log('busy times', resp);
-              })
+          )
 
+          // gCalIds.forEach(async (id) => {
+          //   console.log("here or..?")
+          //   console.log('ID IS', id);
+          //   await User.findOne({slackId: id.id})
+          //     .then((user) => {
+          //       console.log("here")
+          //       console.log('found User',user);
+          //       gCalTokens.push(user.gCalToken);
+          //     })
+          // })
 
+          console.log("Here first or?")
+          console.log('gCalTokens array', gCalTokens);
+          //look through people's busy times
+          let allBusyTimes = []
+
+          //add busy times for invitees
+          gCalTokens.forEach(async(tempToken) => {
+            try {
+              console.log('inside forEach');
+              let busyTimes = await getBusyTimes(tempToken);
+              allBusyTimes.push(...busyTimes);
+              console.log('allBusyTimes', allBusyTimes);
+            }
+            catch (err ) {
+              console.log(err);
+            }
           })
 
           // console.log(slackReplyIds)

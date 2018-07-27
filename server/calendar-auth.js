@@ -27,7 +27,7 @@ export function generateAuthUrl(state) {
 
 router.get('/google/callback' , (req,res) => {
   console.log(req.query);
-  let parsedState= JSON.parse(req.query.state)
+  let parsedState = JSON.parse(req.query.state)
   let id;
   if (typeof(parsedState) !== 'string') {
     console.log('in callback, state is', parsedState);

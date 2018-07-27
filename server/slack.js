@@ -371,3 +371,7 @@ function formatTimeString(date) {
     , timeStr=[fixHour(h), pad(m)].join(':');
   return timeStr + ' ' + (h < 12 ? 'AM' : 'PM');
 }
+
+module.exports = {
+  rtm
+}
