@@ -17,7 +17,7 @@ const token = process.env.BOT_OAUTH_TOKEN;
 // import axios from 'axios';
 // axios(`https://accounts.google.com/o/oauth2/revoke?token=ya29.GlwEBuE1TnVIoUiZ3l7dqgAmte-vlqKxMJ2kwAydOTHJmUDehpx7IBDI-_bs5uDe00bXZ-taHRFEzl61OmvOLaa7Peuv6bActSv9arUabgwwOGIdlCEBiADS-Ec35A`)
 
-cron.schedule('*/15 * * * * *', () => {
+cron.schedule('*/5 * * * *', () => {
   console.log('CRON');
   Meeting.find()
   .then(meetings => {
@@ -177,9 +177,9 @@ app.post('/slack', (req, res) => {
           res.send(`The meeting is now pending, I'll let you know what happens`)
         }
       })
-  }else {
-    // const info = global.reminderInfo[userId]
-    User.findOne({slackId: userId})
+    }else {
+      // const info = global.reminderInfo[userId]
+      User.findOne({slackId: userId})
       .then(async (user) => {
         console.log('User is', user)
         console.log('Token is', !!user.gCalToken)
@@ -203,22 +203,43 @@ app.post('/slack', (req, res) => {
           }
         }
         else {
-          slackFinish(payload)
-          .then(() => {
-            if (payload.callback_id === 'reminder_confirm'){
-              res.send(`I've set a reminder but you should really remember things on your own`)
-            } else if(payload.callback_id === 'meeting_confirm'){
-              res.send(`The meeting is set, but it seems kinda pointless`)
-            } else{
-              console.log('else');
+          if (payload.actions[0].selected_options && payload.actions[0].selected_options[0].value){
+            // console.log('HELLO', payload);
+            // console.log('info', JSON.parse(payload.actions[0].selected_options[0].value));
+            let info = JSON.parse(payload.actions[0].selected_options[0].value);
+            let newPayload = {
+              callback_id: 'meeting_confirm',
+              user: payload.user,
             }
-          })
+            global.meetingInfo[payload.user.id] = {
+              date: info.time,
+              title: info.info.title,
+              channel: info.info.channel,
+              invitees: info.info.invitees,
+              duration: info.info.duration
+            }
+            slackFinish(newPayload)
+            // console.log('time', payload.actions[0].selected_options[0].text);
+          }else{
+            slackFinish(payload)
+            .then(() => {
+              if (payload.callback_id === 'reminder_confirm'){
+                res.send(`I've set a reminder but you should really remember things on your own`)
+              } else if(payload.callback_id === 'meeting_confirm'){
+                res.send(`The meeting is set, but it seems kinda pointless`)
+              } else{
+                console.log('else');
+              }
+            })
+            .catch(err => {
+              console.log('ERROR', err);
+            })
+          }
         }
       })
-      .catch(err => {
-        console.log('ERROR', err);
-      })
-  }
+
+
+    }
 })
 
 export default function slackFinish(payload) {

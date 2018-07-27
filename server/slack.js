@@ -281,8 +281,11 @@ rtm.on('message', (message) => {
 //export this function out to Calendar
 
 //GetTimeSlots For Message Options
-export default function getNewTime(channel, timeSlots) {
-    let times = timeSlots
+function getNewTime(channel, times, info) {
+  console.log('getNewTime', info);
+  let ptimes = times.map(time => {
+    return time.toDateString() + '  '+ time.toLocaleTimeString()
+  })
     web.chat.postMessage({
         channel: channel,
         attachments: [
@@ -299,44 +302,44 @@ export default function getNewTime(channel, timeSlots) {
                         "type": "select",
                         "options": [
                           {
-                            "text": times[0],
-                            "value": times[0]
+                            "text": ptimes[0],
+                            "value": JSON.stringify({info: info, time:times[0]})
                           },
                           {
-                            "text": times[1],
-                            "value": times[1]
+                            "text": ptimes[1],
+                            "value": JSON.stringify({info: info, time:times[1]})
                           },
                           {
-                            "text": times[2],
-                            "value": times[2]
+                            "text": ptimes[2],
+                            "value": JSON.stringify({info: info, time:times[2]})
                           },
                           {
-                            "text": times[3],
-                            "value": times[3]
+                            "text": ptimes[3],
+                            "value": JSON.stringify({info: info, time:times[3]})
                           },
                           {
-                            "text": times[4],
-                            "value": times[4]
+                            "text": ptimes[4],
+                            "value": JSON.stringify({info: info, time:times[4]})
                           },
                           {
-                            "text": times[5],
-                            "value": times[5]
+                            "text": ptimes[5],
+                            "value": JSON.stringify({info: info, time:times[5]})
                           },
                           {
-                            "text": times[6],
-                            "value": times[6]
+                            "text": ptimes[6],
+                            "value": JSON.stringify({info: info, time:times[6]})
                           },
                           {
-                            "text": times[7],
-                            "value": times[7]
+                            "text": ptimes[7],
+                            "value": JSON.stringify({info: info, time:times[7]})
                           },
                           {
-                            "text": times[8],
-                            "value": times[8]
+                            "text": ptimes[8],
+                            "value": JSON.stringify({info: info, time:times[8]})
                           },
                           {
-                            "text": times[9],
-                            "value": times[9]
+                            "text": ptimes[9],
+                            "value": JSON.stringify({info: info, time:times[9]})
                           },
                         ]
                       }
@@ -373,5 +376,6 @@ function formatTimeString(date) {
 }
 
 module.exports = {
-  rtm
+  rtm,
+  getNewTime
 }
